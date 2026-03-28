@@ -1,22 +1,23 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Dict, Any
 
-# What the AI sees
 class Observation(BaseModel):
-    current_soc: float           # 0.0 to 1.0
-    current_time: str            # "HH:MM"
-    electricity_price: float     # Price per kWh
-    grid_limit_kw: float         # Max power available
-    user_history: List[str]      # Last 5 departure times
+    current_soc: float           # State of Charge (0.0 to 1.0)
+    battery_health: float        # State of Health (0.0 to 1.0)
+    electricity_price: float     # Current price per kWh
+    grid_load_kw: float          # Total demand on the local grid
+    time_of_day: str             # "HH:MM"
+    user_history: List[float]    # Last 5 departure times (decimal hours)
 
-# What the AI can do
 class Action(BaseModel):
-    charge_rate_kw: float        # e.g., 0.0 to 11.0 kW
-    discharge_to_grid: bool      # V2G toggle
+    charge_rate_kw: float        # Target charging speed (e.g., -10.0 to 22.0)
+    # Note: Negative values = V2G (discharging back to grid)
 
-# The result of a step
-class StepResponse(BaseModel):
-    observation: Observation
-    reward: float
-    done: bool
-    info: dict
+class State(BaseModel):
+    """Internal state that the AI doesn't see directly but the grader uses."""
+    current_soc: float
+    battery_health: float
+    total_cost_saved: float
+    departure_time: float        # The 'secret' time the user actually leaves
+    is_plugged_in: bool
+    step_count: int
