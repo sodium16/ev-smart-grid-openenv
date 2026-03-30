@@ -1,0 +1,51 @@
+version: "1.0.0"
+name: "tata-nexon-grid-env"
+description: "Simulates EV charging in the Indian context, including grid instability and load shedding."
+category: "sustainability/engineering"
+
+action_space:
+  type: "object"
+  properties:
+    charge_rate_kw:
+      type: "number"
+      minimum: -15.0
+      maximum: 50.0
+      description: "Rate of charge (positive) or discharge (negative) in kW."
+
+observation_space:
+  type: "object"
+  properties:
+    current_soc:
+      type: "number"
+      description: "State of Charge (0.0 to 1.0)."
+    battery_health_soh:
+      type: "number"
+      description: "State of Health (1.0 is new)."
+    electricity_price_inr:
+      type: "number"
+      description: "Cost per unit in Indian Rupees."
+    is_grid_active:
+      type: "boolean"
+      description: "True if power is available, False during a power cut."
+    time_of_day:
+      type: "string"
+      description: "HH:MM format."
+    user_type:
+      type: "string"
+      description: "User archetype: amazon_fleet or personal."
+    target_soc:
+      type: "number"
+      description: "The required State of Charge before departure."
+    user_history:
+      type: "array"
+      items:
+        type: "number"
+      description: "List of the last 5 departure times (in hours)."
+
+tasks:
+  - id: "night_owl"
+    difficulty: "easy"
+  - id: "grid_survivor"
+    difficulty: "medium"
+  - id: "v2g_profit"
+    difficulty: "hard"
