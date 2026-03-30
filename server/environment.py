@@ -1,5 +1,6 @@
 import random
 from .models import Observation, Action, State, UserType
+from .utils import generate_user_history
 
 class TataNexonEVEnv:
     def __init__(self):
@@ -24,6 +25,8 @@ class TataNexonEVEnv:
         
         # Randomize departure using Gaussian distribution for "messiness"
         actual_dep = random.gauss(prof["avg_dep"], prof["var"])
+
+        dynamic_history = generate_user_history(prof["avg_dep"], prof["var"])
         
         self.state = State(
             current_soc=random.uniform(*prof["start_soc"]),
@@ -33,42 +36,64 @@ class TataNexonEVEnv:
             user_type=u_type,
             target_soc=prof["target"],
             current_hour=22.0, # Starts at 10 PM
-            is_grid_active=True
+            is_grid_active=True,
+            user_history = dynamic_history
         )
         return self._get_obs()
 
     def step(self, action: Action):
-        # 1. Grid Logic (Load Shedding)
+        # 1. Grid Logic (Stability & Load Shedding)
+        # 15-minute steps (0.25h)
         hour = self.state.current_hour % 24
-        prob = 0.25 if (18 <= hour <= 22) else 0.05
+        is_peak = (18 <= hour <= 22)
+        
+        # High probability of load shedding during peak hours (6 PM - 10 PM)
+        prob = 0.25 if is_peak else 0.05
         self.state.is_grid_active = random.random() > prob
 
-        # 2. Physics
+        # Grid Stability Index: Simulates voltage fluctuations common in residential grids
+        # Stability drops slightly during peak hours due to local network stress
+        stability = random.uniform(0.75, 0.95) if is_peak else random.uniform(0.95, 1.0)
+
+        # 2. Physics & Power Delivery
         actual_kw = 0.0
         if self.state.is_grid_active:
-            # Clip action to car's hardware limits
-            actual_kw = max(-15.0, min(action.charge_rate_kw, self.max_dc_rate))
+            # Clip action to car's hardware limits (e.g., -15.0 to 50.0 kW)
+            requested_kw = max(-15.0, min(action.charge_rate_kw, self.max_dc_rate))
+            # Power delivered is limited by the grid's immediate stability/voltage quality
+            actual_kw = requested_kw * stability
         
-        # 15 min steps (0.25h)
+        # Update State of Charge (SoC)
         self.state.current_soc += (actual_kw * 0.25) / self.capacity_kwh
         self.state.current_soc = max(0.0, min(1.0, self.state.current_soc))
         
-        # Health loss formula: Degradation increases with power square
-        self.state.soh -= 0.00001 * ((abs(actual_kw)/self.capacity_kwh)**2)
+        # 3. Refined Health Loss (SOH)
+        # Degradation is higher for DC Fast Charging (>22kW) than standard AC charging
+        c_rate = abs(actual_kw) / self.capacity_kwh
+        if abs(actual_kw) > 22.0:
+            # Accelerated wear-and-tear for fast charging/discharging
+            self.state.soh -= 0.00005 * (c_rate ** 2)
+        else:
+            # Standard linear-square degradation for healthy charging rates
+            self.state.soh -= 0.00001 * (c_rate ** 2)
+        
+        # 4. Pricing & Time Progression
+        # Indian electricity slabs: ₹10.0 (Peak) vs ₹6.5 (Off-Peak)
+        price = 10.0 if is_peak else 6.5
+        self.state.total_bill_inr += actual_kw * 0.25 * price
         
         self.state.current_hour += 0.25
         
-        # Pricing: Peak vs Off-Peak
-        price = 10.0 if (18 <= hour <= 22) else 6.5
-        self.state.total_bill_inr += actual_kw * 0.25 * price
+        # 5. Episode Termination
+        # Departure time is treated as 'next day' (24h + dep_time)
         target_time = self.state.departure_time + 24.0
-        # Done if user leaves
         done = self.state.current_hour >= target_time
-
-        if self.state.current_soc >= self.state.target_soc:
-            pass
         
-        return self._get_obs(), 0.0, done, {"type": self.state.user_type.value}
+        return self._get_obs(), 0.0, done, {
+            "type": self.state.user_type.value,
+            "grid_stability": round(stability, 2),
+            "is_power_cut": not self.state.is_grid_active
+        }
 
     def _get_obs(self) -> Observation:
         h = int(self.state.current_hour % 24)
