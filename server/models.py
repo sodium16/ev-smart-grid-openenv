@@ -28,3 +28,4 @@ class State(BaseModel):
     target_soc: float
     current_hour: float
     is_grid_active: bool
+    user_history: List[float]
