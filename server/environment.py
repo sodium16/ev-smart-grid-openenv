@@ -60,8 +60,15 @@ class TataNexonEVEnv:
         if self.state.is_grid_active:
             # Clip action to car's hardware limits (e.g., -15.0 to 50.0 kW)
             requested_kw = max(-15.0, min(action.charge_rate_kw, self.max_dc_rate))
-            # Power delivered is limited by the grid's immediate stability/voltage quality
-            actual_kw = requested_kw * stability
+            # Prevent charging if battery is full (unless discharging)
+            if requested_kw > 0 and self.state.current_soc >= 1.0:
+                actual_kw = 0.0
+            # Prevent discharging if battery is empty
+            elif requested_kw < 0 and self.state.current_soc <= 0.0:
+                actual_kw = 0.0
+            else:
+                # Power delivered is limited by the grid's immediate stability/voltage quality
+                actual_kw = requested_kw * stability
         
         # Update State of Charge (SoC)
         self.state.current_soc += (actual_kw * 0.25) / self.capacity_kwh
@@ -81,6 +88,16 @@ class TataNexonEVEnv:
         # Indian electricity slabs: ₹10.0 (Peak) vs ₹6.5 (Off-Peak)
         price = 10.0 if is_peak else 6.5
         self.state.total_bill_inr += actual_kw * 0.25 * price
+
+        # Per-step reward for OpenEnv compliance
+        soc_progress = (actual_kw * 0.25) / self.capacity_kwh
+        reward = soc_progress * 10.0
+
+        cost_penalty = (actual_kw * 0.25 * price) / 100.0
+        reward -= cost_penalty
+
+        health_penalty = (1.0 - stability) * 0.5 + (0.00005 if actual_kw > 22.0 else 0.0)
+        reward -= health_penalty
         
         self.state.current_hour += 0.25
         
@@ -89,10 +106,11 @@ class TataNexonEVEnv:
         target_time = self.state.departure_time + 24.0
         done = self.state.current_hour >= target_time
         
-        return self._get_obs(), 0.0, done, {
+        return self._get_obs(), round(reward, 4), done, {
             "type": self.state.user_type.value,
             "grid_stability": round(stability, 2),
-            "is_power_cut": not self.state.is_grid_active
+            "is_power_cut": not self.state.is_grid_active,
+            "bill": round(self.state.total_bill_inr, 2)
         }
 
     def _get_obs(self) -> Observation:

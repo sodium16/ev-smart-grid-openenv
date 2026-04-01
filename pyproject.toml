@@ -1,0 +1,18 @@
+[project]
+name = "tata-nexon-grid-env"
+version = "1.0.0"
+description = "Indian EV Smart Grid Simulation"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "pydantic-settings",
+    "openai",
+    "python-dotenv",
+    "openenv-core",
+    "httpx"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
