@@ -42,3 +42,21 @@ def step(action: Action):
 @app.get("/state")
 def state():
     return env.state
+@app.get("/state")
+async def get_state() -> State:
+    """Returns the internal raw state of the battery and grid."""
+    return env.state
+
+@app.get("/grader/{task_id}")
+async def get_grader(task_id: str):
+    """Calculates the score based on SoC and Bill."""
+    state = env.state
+    # Logic: High SoC + Low Bill = High Score
+    if state.current_soc >= 0.8:
+        score = 1.0 - (state.total_bill_inr / 500.0) # Penalty for high cost
+        return {"score": max(0.0, score)}
+    return {"score": 0.0}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=7860)
