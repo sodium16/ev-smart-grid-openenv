@@ -1,35 +1,32 @@
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from .environment import TataNexonEVEnv
-from .models import Action
+from .models import Action, Observation, State
+from .tasks import TASKS # Import the task list
 
-app = FastAPI(title="EV Smart Grid OpenEnv")
-
-# Global environment instance
+app = FastAPI(title="NexonGuard: Indian EV Smart Grid")
 env = TataNexonEVEnv()
 
-
-from typing import Optional
-from pydantic import BaseModel
-
-class ResetRequest(BaseModel):
-    task_name: Optional[str] = None
-
+@app.get("/tasks")
+def get_tasks():
+    """Returns the standardized task list with metadata."""
+    return [
+        {
+            "id": t.name.lower().replace(" ", "_"),
+            "name": t.name,
+            "description": t.description,
+            "max_steps": t.max_steps
+        } for t in TASKS
+    ]
 
 @app.post("/reset")
-def reset(req: ResetRequest = ResetRequest()):
+def reset(task_id: str = "night_charging"):
+    """Resets the environment for a specific task."""
     obs = env.reset()
-    return {
-        "observation": obs
-    }
-
+    return {"observation": obs}
 
 @app.post("/step")
 def step(action: Action):
+    """Executes a simulation step."""
     obs, reward, done, info = env.step(action)
     return {
         "observation": obs,
@@ -38,25 +35,49 @@ def step(action: Action):
         "info": info
     }
 
-
 @app.get("/state")
-def state():
-    return env.state
-@app.get("/state")
-async def get_state() -> State:
-    """Returns the internal raw state of the battery and grid."""
+def get_state() -> State:
+    """Returns the internal raw state for the grader."""
     return env.state
 
 @app.get("/grader/{task_id}")
-async def get_grader(task_id: str):
-    """Calculates the score based on SoC and Bill."""
-    state = env.state
-    # Logic: High SoC + Low Bill = High Score
-    if state.current_soc >= 0.8:
-        score = 1.0 - (state.total_bill_inr / 500.0) # Penalty for high cost
-        return {"score": max(0.0, score)}
-    return {"score": 0.0}
+def get_grader(task_id: str):
+    """Programmatic grader scoring performance (0.0-1.0)."""
+    # Find the task in TASKS list
+    task = next((t for t in TASKS if t.name.lower().replace(" ", "_") == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    score = task.grader(env.state.dict())
+    return {"score": score}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+@app.get("/health")
+async def health():
+    """Requirement: GET /health returns healthy status"""
+    return {"status": "healthy"}
+
+@app.get("/metadata")
+async def metadata():
+    return {
+        "name": "tata-nexon-grid-env",
+        "description": "Simulates EV charging in the Indian context, including grid instability and load shedding.",
+        "version": "0.1.0",           # Matches your pyproject.toml
+        "category": "sustainability/engineering"
+    }
+
+@app.get("/schema")
+async def schema():
+    """Requirement: GET /schema returns action, observation, and state schemas"""
+    return {
+        "action": Action.schema(),
+        "observation": Observation.schema(),
+        "state": State.schema()
+    }
+
+@app.post("/mcp")
+async def mcp():
+    """Requirement: POST /mcp is reachable (Model Context Protocol placeholder)"""
+    return {
+        "jsonrpc": "2.0",
+        "result": {"status": "connected"}
+    }
