@@ -1,36 +1,35 @@
-from fastapi import FastAPI, HTTPException
-from typing import List, Dict, Any
+import sys
+import os
 
-# Internal imports from Vishwas's work
-from server.models import Action, Observation, State
-from server.environment import TataNexonEVEnv
-# Note: Assuming Amogh creates a tasks.py with a TASK_REGISTRY
-# from server.tasks import TASK_REGISTRY 
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-app = FastAPI(title="Tata Nexon EV Smart Grid OpenEnv")
+from fastapi import FastAPI
+from .environment import TataNexonEVEnv
+from .models import Action
 
-# Initialize the simulator
+app = FastAPI(title="EV Smart Grid OpenEnv")
+
+# Global environment instance
 env = TataNexonEVEnv()
 
-@app.get("/tasks")
-async def get_tasks():
-    """Returns the tasks available for the agent."""
-    # Placeholder for Amogh's task logic
-    return [
-        {"id": "night_owl", "name": "The Night Owl", "difficulty": "easy"},
-        {"id": "fleet_manager", "name": "Fleet Manager", "difficulty": "medium"},
-        {"id": "energy_arbitrage", "name": "V2G Arbitrage", "difficulty": "hard"}
-    ]
+
+from typing import Optional
+from pydantic import BaseModel
+
+class ResetRequest(BaseModel):
+    task_name: Optional[str] = None
+
 
 @app.post("/reset")
-async def reset(task_id: str = "night_owl") -> Observation:
-    """Resets the environment to initial state."""
-    # For now, just calls Vishwas's reset
-    return env.reset()
+def reset(req: ResetRequest = ResetRequest()):
+    obs = env.reset()
+    return {
+        "observation": obs
+    }
+
 
 @app.post("/step")
-async def step(action: Action):
-    """Executes a 15-minute time step in the simulation."""
+def step(action: Action):
     obs, reward, done, info = env.step(action)
     return {
         "observation": obs,
@@ -39,6 +38,10 @@ async def step(action: Action):
         "info": info
     }
 
+
+@app.get("/state")
+def state():
+    return env.state
 @app.get("/state")
 async def get_state() -> State:
     """Returns the internal raw state of the battery and grid."""
