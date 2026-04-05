@@ -25,6 +25,7 @@ class TataNexonEVEnv:
         
         # Randomize departure using Gaussian distribution for "messiness"
         actual_dep = random.gauss(prof["avg_dep"], prof["var"])
+        actual_dep = max(0.0, min(23.99, actual_dep))
 
         dynamic_history = generate_user_history(prof["avg_dep"], prof["var"])
 
@@ -41,10 +42,10 @@ class TataNexonEVEnv:
             battery_health_soh=initial_soh,      # ADDED
             electricity_price_inr=initial_price,  # ADDED
             time_of_day=initial_time_str,        # ADDED
-            user_type="personal", 
+            user_type=u_type.value, 
             user_history=dynamic_history,
             total_bill_inr=0.0,
-            departure_time=8.0 # 8 AM next day
+            departure_time=actual_dep
         )
         return self._get_obs()
 
@@ -86,14 +87,17 @@ class TataNexonEVEnv:
         c_rate = abs(actual_kw) / self.capacity_kwh
         if abs(actual_kw) > 22.0:
             # Accelerated wear-and-tear for fast charging/discharging
-            self.state.soh -= 0.00005 * (c_rate ** 2)
+            self.state.battery_health_soh -= 0.00005 * (c_rate ** 2)
         else:
             # Standard linear-square degradation for healthy charging rates
-            self.state.soh -= 0.00001 * (c_rate ** 2)
+            self.state.battery_health_soh -= 0.00001 * (c_rate ** 2)
+
+        self.state.battery_health_soh = max(0.0, min(1.0, self.state.battery_health_soh))
         
         # 4. Pricing & Time Progression
         # Indian electricity slabs: ₹10.0 (Peak) vs ₹6.5 (Off-Peak)
         price = 10.0 if is_peak else 6.5
+        self.state.electricity_price_inr = price
         self.state.total_bill_inr += actual_kw * 0.25 * price
 
         # Per-step reward for OpenEnv compliance
@@ -107,6 +111,9 @@ class TataNexonEVEnv:
         reward -= health_penalty
         
         self.state.current_hour += 0.25
+        hour_text = int(self.state.current_hour % 24)
+        minute_text = int(round(((self.state.current_hour % 1) * 60))) % 60
+        self.state.time_of_day = f"{hour_text:02d}:{minute_text:02d}"
         
         # 5. Episode Termination
         # Departure time is treated as 'next day' (24h + dep_time)
@@ -115,15 +122,15 @@ class TataNexonEVEnv:
         
         return self._get_obs(), reward, done, {"info": "step successful"}
 
-def _get_obs(self) -> Observation:
-        """Helper to convert internal state to a public Observation object."""
-        return Observation(
-            current_soc=self.state.current_soc,
-            battery_health_soh=self.state.battery_health_soh,
-            electricity_price_inr=self.state.electricity_price_inr,
-            is_grid_active=self.state.is_grid_active,
-            time_of_day=self.state.time_of_day,
-            user_type=self.state.user_type,
-            target_soc=self.state.target_soc,
-            user_history=self.state.user_history
-        )
+    def _get_obs(self) -> Observation:
+            """Helper to convert internal state to a public Observation object."""
+            return Observation(
+                current_soc=self.state.current_soc,
+                battery_health_soh=self.state.battery_health_soh,
+                electricity_price_inr=self.state.electricity_price_inr,
+                is_grid_active=self.state.is_grid_active,
+                time_of_day=self.state.time_of_day,
+                user_type=self.state.user_type,
+                target_soc=self.state.target_soc,
+                user_history=self.state.user_history
+            )
