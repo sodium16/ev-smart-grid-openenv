@@ -3,6 +3,10 @@ from fastapi import FastAPI, HTTPException
 from .environment import TataNexonEVEnv
 from .models import Action, Observation, State
 from .tasks import TASKS # Import the task list
+from pydantic import BaseModel
+
+class ResetRequest(BaseModel):
+    task_name: str = "night_owl"
 
 app = FastAPI(title="NexonGuard: Indian EV Smart Grid")
 env = TataNexonEVEnv()
@@ -25,7 +29,7 @@ def get_tasks():
     ]
 
 @app.post("/reset")
-def reset(task_id: str = "night_owl"):
+def reset(request: ResetRequest = None):
     #Resets the environment for a specific task.
     obs = env.reset()
     return {"observation": obs}
