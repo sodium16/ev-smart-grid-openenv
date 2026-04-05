@@ -6,28 +6,33 @@ from .tasks import TASKS # Import the task list
 
 app = FastAPI(title="NexonGuard: Indian EV Smart Grid")
 env = TataNexonEVEnv()
+TASK_ID_MAP = {
+    "night_owl": TASKS[0],
+    "grid_survivor": TASKS[1],
+    "v2g_profit": TASKS[2],
+}
 
 @app.get("/tasks")
 def get_tasks():
-    """Returns the standardized task list with metadata."""
+    #Returns the standardized task list with metadata.
     return [
         {
-            "id": t.name.lower().replace(" ", "_"),
+            "id": task_id,
             "name": t.name,
             "description": t.description,
             "max_steps": t.max_steps
-        } for t in TASKS
+        } for task_id, t in TASK_ID_MAP.items()
     ]
 
 @app.post("/reset")
-def reset(task_id: str = "night_charging"):
-    """Resets the environment for a specific task."""
+def reset(task_id: str = "night_owl"):
+    #Resets the environment for a specific task.
     obs = env.reset()
     return {"observation": obs}
 
 @app.post("/step")
 def step(action: Action):
-    """Executes a simulation step."""
+    #Executes a simulation step.
     obs, reward, done, info = env.step(action)
     return {
         "observation": obs,
@@ -38,14 +43,13 @@ def step(action: Action):
 
 @app.get("/state")
 def get_state() -> State:
-    """Returns the internal raw state for the grader."""
+    #Returns the internal raw state for the grader.
     return env.state
 
 @app.get("/grader/{task_id}")
 def get_grader(task_id: str):
-    """Programmatic grader scoring performance (0.0-1.0)."""
-    # Find the task in TASKS list
-    task = next((t for t in TASKS if t.name.lower().replace(" ", "_") == task_id), None)
+    #Programmatic grader scoring performance (0.0-1.0).
+    task = TASK_ID_MAP.get(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     
@@ -54,7 +58,7 @@ def get_grader(task_id: str):
 
 @app.get("/health")
 async def health():
-    """Requirement: GET /health returns healthy status"""
+    #Requirement: GET /health returns healthy status
     return {"status": "healthy"}
 
 @app.get("/metadata")
@@ -62,7 +66,7 @@ async def metadata():
     return {
         "name": "tata-nexon-grid-env",
         "description": "Simulates EV charging in the Indian context, including grid instability and load shedding.",
-        "version": "0.1.0",           # Matches your pyproject.toml
+        "version": "1.0.0",
         "category": "sustainability/engineering"
     }
 
@@ -78,14 +82,14 @@ async def get_schema():
 
 @app.post("/mcp")
 async def mcp():
-    """Requirement: POST /mcp is reachable (Model Context Protocol placeholder)"""
+    #"""Requirement: POST /mcp is reachable (Model Context Protocol placeholder)"""
     return {
         "jsonrpc": "2.0",
         "result": {"status": "connected"}
     }
 
 def main():
-    """The entry point for the 'server' command."""
+    #"""The entry point for the 'server' command."""
     uvicorn.run("server.app:app", host = "0.0.0.0", port = 7860, reload = False)
 
 if __name__ == "__main__":

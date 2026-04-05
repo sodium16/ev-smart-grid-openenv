@@ -22,6 +22,7 @@ class Action(BaseModel):
 # State doesn't need to match YAML, but it should be consistent
 class State(BaseModel):
     current_soc: float
+    current_hour: float
     battery_health_soh: float
     electricity_price_inr: float
     is_grid_active: bool

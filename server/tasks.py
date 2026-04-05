@@ -112,7 +112,7 @@ def v2g_profit_grader(state: Dict[str, Any]) -> float:
 
     current_soc = state.get("current_soc", 0.0)
     target_soc = state.get("target_soc", 1.0)
-    soh = state.get("soh", 1.0)
+    soh = state.get("battery_health_soh", 1.0)
     total_bill = state.get("total_bill_inr", 0.0)
 
     # Normalize components
