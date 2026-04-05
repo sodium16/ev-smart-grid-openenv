@@ -1,7 +1,7 @@
 [project]
 name = "tata-nexon-grid-env"
 version = "1.0.0"
-description = "Indian EV Smart Grid Simulation"
+description = "Simulates EV charging in the Indian context, including grid instability and load shedding."
 dependencies = [
     "fastapi",
     "uvicorn",
@@ -10,8 +10,12 @@ dependencies = [
     "openai",
     "python-dotenv",
     "openenv-core",
-    "httpx"
+    "httpx",
+    "requests"
 ]
+
+[project.scripts]
+server = "server.app:main"
 
 [build-system]
 requires = ["setuptools", "wheel"]

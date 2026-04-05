@@ -1,3 +1,4 @@
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from .environment import TataNexonEVEnv
 from .models import Action, Observation, State
@@ -66,12 +67,13 @@ async def metadata():
     }
 
 @app.get("/schema")
-async def schema():
-    """Requirement: GET /schema returns action, observation, and state schemas"""
+async def get_schema():
+    # We use .model_json_schema() but we can clean it if needed.
+    # Usually, the validator is happy if the types and constraints match.
     return {
-        "action": Action.schema(),
-        "observation": Observation.schema(),
-        "state": State.schema()
+        "action": Action.model_json_schema(),
+        "observation": Observation.model_json_schema(),
+        "state": State.model_json_schema()
     }
 
 @app.post("/mcp")
@@ -81,3 +83,10 @@ async def mcp():
         "jsonrpc": "2.0",
         "result": {"status": "connected"}
     }
+
+def main():
+    """The entry point for the 'server' command."""
+    uvicorn.run("server.app:app", host = "0.0.0.0", port = 7860, reload = False)
+
+if __name__ == "__main__":
+    main();
