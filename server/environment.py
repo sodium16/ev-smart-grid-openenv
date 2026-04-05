@@ -27,17 +27,24 @@ class TataNexonEVEnv:
         actual_dep = random.gauss(prof["avg_dep"], prof["var"])
 
         dynamic_history = generate_user_history(prof["avg_dep"], prof["var"])
+
+        initial_hour = 22.0
+        initial_time_str = "22:00"
+        initial_price = 6.5
+        initial_soh = 1.0
         
         self.state = State(
-            current_soc=random.uniform(*prof["start_soc"]),
-            soh=1.0,
-            total_bill_inr=0.0,
-            departure_time=actual_dep,
-            user_type=u_type,
-            target_soc=prof["target"],
-            current_hour=22.0, # Starts at 10 PM
+            current_soc=random.uniform(0.1, 0.3), # Example range
             is_grid_active=True,
-            user_history = dynamic_history
+            target_soc=0.9, # Example target
+            current_hour=initial_hour,
+            battery_health_soh=initial_soh,      # ADDED
+            electricity_price_inr=initial_price,  # ADDED
+            time_of_day=initial_time_str,        # ADDED
+            user_type="personal", 
+            user_history=dynamic_history,
+            total_bill_inr=0.0,
+            departure_time=8.0 # 8 AM next day
         )
         return self._get_obs()
 
@@ -106,23 +113,17 @@ class TataNexonEVEnv:
         target_time = self.state.departure_time + 24.0
         done = self.state.current_hour >= target_time
         
-        return self._get_obs(), round(reward, 4), done, {
-            "type": self.state.user_type.value,
-            "grid_stability": round(stability, 2),
-            "is_power_cut": not self.state.is_grid_active,
-            "bill": round(self.state.total_bill_inr, 2)
-        }
+        return self._get_obs(), reward, done, {"info": "step successful"}
 
-    def _get_obs(self) -> Observation:
-        h = int(self.state.current_hour % 24)
-        m = int((self.state.current_hour % 1) * 60)
+def _get_obs(self) -> Observation:
+        """Helper to convert internal state to a public Observation object."""
         return Observation(
-            current_soc=round(self.state.current_soc, 4),
-            battery_health_soh=round(self.state.soh, 4),
-            electricity_price_inr=10.0 if (18 <= int(h) <= 22) else 6.5,
+            current_soc=self.state.current_soc,
+            battery_health_soh=self.state.battery_health_soh,
+            electricity_price_inr=self.state.electricity_price_inr,
             is_grid_active=self.state.is_grid_active,
-            time_of_day=f"{h:02d}:{m:02d}",
+            time_of_day=self.state.time_of_day,
             user_type=self.state.user_type,
             target_soc=self.state.target_soc,
-            user_history=[6.0, 6.1, 5.9, 6.0, 6.0] if self.state.user_type == UserType.AMAZON_FLEET else [8.0, 9.5, 7.5, 8.2, 9.0]
+            user_history=self.state.user_history
         )
