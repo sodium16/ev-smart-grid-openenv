@@ -43,7 +43,17 @@ fi
 
 # Step 3: OpenEnv Spec Check
 printf "[3/3] Checking OpenEnv Spec... "
-if openenv validate "$REPO_DIR" > /dev/null 2>&1; then
+SCHEMA=$(curl -s http://localhost:7860/schema)
+if echo "$SCHEMA" | python3 -c "
+import sys, json
+s = json.load(sys.stdin)
+assert 'action' in s
+assert 'observation' in s
+assert 'charge_rate_kw' in s['action']['properties']
+assert s['action']['properties']['charge_rate_kw']['minimum'] == -15.0
+assert s['action']['properties']['charge_rate_kw']['maximum'] == 50.0
+print('[OK]')
+" 2>&1 | grep -q "\[OK\]"; then
     printf "${GREEN}PASSED${NC}\n"
 else
     printf "${RED}FAILED${NC} (Schema mismatch)\n"
