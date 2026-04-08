@@ -32,12 +32,12 @@ def night_charging_grader(state: Dict[str, Any]) -> float:
     total_bill = state.get("total_bill_inr", 0.0)
 
     # Primary: SOC completion (0.0 -> 0.7)
-    soc_score = min(current_soc / target_soc, 1.0) if target_soc > 0 else 1.0
+    soc_score = min(current_soc / target_soc, 0.99) if target_soc > 0 else 1.0
     score = 0.7 * soc_score
 
     # Secondary: cost efficiency (0.0 -> 0.3)
     # ₹350 is a reasonable overnight full-charge bill; reward staying under it
-    cost_ratio = min(total_bill / 350.0, 1.0)
+    cost_ratio = min(total_bill / 350.0, 0.99)
     score += 0.3 * (1.0 - cost_ratio)
 
     return round(max(0.001, min(0.999, score)), 3)
@@ -69,7 +69,7 @@ def grid_constraint_grader(state: Dict[str, Any]) -> float:
     total_bill = state.get("total_bill_inr", 0.0)
 
     # SOC completion (0.0 -> 0.6)
-    soc_score = min(current_soc / target_soc, 1.0) if target_soc > 0 else 1.0
+    soc_score = min(current_soc / target_soc, 0.99) if target_soc > 0 else 1.0
     score = 0.6 * soc_score
 
     # Grid constraint adherence (0.0 -> 0.25)
@@ -78,7 +78,7 @@ def grid_constraint_grader(state: Dict[str, Any]) -> float:
     score += 0.25 - violation_penalty
 
     # Cost awareness (0.0 -> 0.15)
-    cost_ratio = min(total_bill / 400.0, 1.0)
+    cost_ratio = min(total_bill / 400.0, 0.99)
     score += 0.15 * (1.0 - cost_ratio)
 
     return round(max(0.001, min(0.999, score)), 3)
@@ -113,19 +113,19 @@ def v2g_profit_grader(state: Dict[str, Any]) -> float:
     net_bill = state.get("total_bill_inr", 0.0)   # negative = profit from V2G
 
     # Component 1: SOC completion (0.0 -> 0.40)
-    soc_score = min(current_soc / target_soc, 1.0) if target_soc > 0 else 1.0
+    soc_score = min(current_soc / target_soc, 0.99) if target_soc > 0 else 1.0
     soc_component = 0.40 * soc_score
 
     # Component 2: Cost/profit performance (0.0 -> 0.35)
     # ₹500 is a bad bill (agent charged at peak), ₹0 is neutral, negative = earned via V2G
     # Map [-200, 500] -> [1.0, 0.0] linearly; clamp to [0, 1]
     cost_score = 1.0 - ((net_bill + 200.0) / 700.0)
-    cost_component = 0.35 * max(0.0, min(1.0, cost_score))
+    cost_component = 0.35 * max(0.0, min(0.99, cost_score))
 
     # Component 3: Battery health preservation (0.0 -> 0.25)
     # SOH starts near 1.0 and degrades; penalize degradation proportionally
     # Assume SOH below 0.95 is concerning; below 0.85 is bad
-    health_score = min(soh / 0.95, 1.0)
+    health_score = min(soh / 0.95, 0.99)
     health_component = 0.25 * health_score
 
     score = soc_component + cost_component + health_component
