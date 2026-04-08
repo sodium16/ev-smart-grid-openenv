@@ -40,7 +40,7 @@ def night_charging_grader(state: Dict[str, Any]) -> float:
     cost_ratio = min(total_bill / 350.0, 1.0)
     score += 0.3 * (1.0 - cost_ratio)
 
-    return round(max(0.0, min(1.0, score)), 3)
+    return round(max(0.001, min(0.999, score)), 3)
 
 
 night_charging_task = Task(
@@ -81,7 +81,7 @@ def grid_constraint_grader(state: Dict[str, Any]) -> float:
     cost_ratio = min(total_bill / 400.0, 1.0)
     score += 0.15 * (1.0 - cost_ratio)
 
-    return round(max(0.0, min(1.0, score)), 3)
+    return round(max(0.001, min(0.999, score)), 3)
 
 
 grid_constraint_task = Task(
@@ -129,7 +129,7 @@ def v2g_profit_grader(state: Dict[str, Any]) -> float:
     health_component = 0.25 * health_score
 
     score = soc_component + cost_component + health_component
-    return round(max(0.0, min(1.0, score)), 3)
+    return round(max(0.001, min(0.999, score)), 3)
 
 
 v2g_profit_task = Task(
