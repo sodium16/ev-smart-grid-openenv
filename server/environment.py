@@ -35,47 +35,50 @@ class TataNexonEVEnv:
         initial_soh = 1.0
         
         self.state = State(
-            current_soc=random.uniform(0.1, 0.3), # Example range
+            current_soc=random.uniform(prof["start_soc"][0], prof["start_soc"][1]),
             is_grid_active=True,
-            target_soc=0.9, # Example target
+            target_soc=prof["target"],
             current_hour=initial_hour,
-            battery_health_soh=initial_soh,      # ADDED
-            electricity_price_inr=initial_price,  # ADDED
-            time_of_day=initial_time_str,        # ADDED
+            battery_health_soh=initial_soh,
+            electricity_price_inr=initial_price,
+            time_of_day=initial_time_str,
             user_type=u_type.value, 
             user_history=dynamic_history,
             total_bill_inr=0.0,
-            departure_time=actual_dep
+            departure_time=actual_dep,
+            grid_violation_count=0  # Initialize violation tracker
         )
         return self._get_obs()
 
     def step(self, action: Action):
         # 1. Grid Logic (Stability & Load Shedding)
-        # 15-minute steps (0.25h)
         hour = self.state.current_hour % 24
         is_peak = (18 <= hour <= 22)
         
-        # High probability of load shedding during peak hours (6 PM - 10 PM)
+        # Probability of load shedding
         prob = 0.25 if is_peak else 0.05
         self.state.is_grid_active = random.random() > prob
 
-        # Grid Stability Index: Simulates voltage fluctuations common in residential grids
-        # Stability drops slightly during peak hours due to local network stress
+        # Grid Stability Index
         stability = random.uniform(0.75, 0.95) if is_peak else random.uniform(0.95, 1.0)
 
         # 2. Physics & Power Delivery
         actual_kw = 0.0
-        if self.state.is_grid_active:
-            # Clip action to car's hardware limits (e.g., -15.0 to 50.0 kW)
+        
+        # Check for grid violation (Action is charging but grid is down)
+        if action.charge_rate_kw > 0 and not self.state.is_grid_active:
+            self.state.grid_violation_count += 1
+            actual_kw = 0.0
+        elif self.state.is_grid_active:
+            # Clip action to car's hardware limits
             requested_kw = max(-15.0, min(action.charge_rate_kw, self.max_dc_rate))
-            # Prevent charging if battery is full (unless discharging)
+            
+            # SOC constraints
             if requested_kw > 0 and self.state.current_soc >= 1.0:
                 actual_kw = 0.0
-            # Prevent discharging if battery is empty
             elif requested_kw < 0 and self.state.current_soc <= 0.0:
                 actual_kw = 0.0
             else:
-                # Power delivered is limited by the grid's immediate stability/voltage quality
                 actual_kw = requested_kw * stability
         
         # Update State of Charge (SoC)
@@ -83,32 +86,24 @@ class TataNexonEVEnv:
         self.state.current_soc = max(0.0, min(1.0, self.state.current_soc))
         
         # 3. Refined Health Loss (SOH)
-        # Degradation is higher for DC Fast Charging (>22kW) than standard AC charging
         c_rate = abs(actual_kw) / self.capacity_kwh
         if abs(actual_kw) > 22.0:
-            # Accelerated wear-and-tear for fast charging/discharging
             self.state.battery_health_soh -= 0.00005 * (c_rate ** 2)
         else:
-            # Standard linear-square degradation for healthy charging rates
             self.state.battery_health_soh -= 0.00001 * (c_rate ** 2)
 
         self.state.battery_health_soh = max(0.0, min(1.0, self.state.battery_health_soh))
         
         # 4. Pricing & Time Progression
-        # Indian electricity slabs: ₹10.0 (Peak) vs ₹6.5 (Off-Peak)
         price = 10.0 if is_peak else 6.5
         self.state.electricity_price_inr = price
         self.state.total_bill_inr += actual_kw * 0.25 * price
 
-        # Per-step reward for OpenEnv compliance
+        # Reward Calculation
         soc_progress = (actual_kw * 0.25) / self.capacity_kwh
         reward = soc_progress * 10.0
-
-        cost_penalty = (actual_kw * 0.25 * price) / 100.0
-        reward -= cost_penalty
-
-        health_penalty = (1.0 - stability) * 0.5 + (0.00005 if actual_kw > 22.0 else 0.0)
-        reward -= health_penalty
+        reward -= (actual_kw * 0.25 * price) / 100.0
+        reward -= (1.0 - stability) * 0.5
         
         self.state.current_hour += 0.25
         hour_text = int(self.state.current_hour % 24)
@@ -116,21 +111,19 @@ class TataNexonEVEnv:
         self.state.time_of_day = f"{hour_text:02d}:{minute_text:02d}"
         
         # 5. Episode Termination
-        # Departure time is treated as 'next day' (24h + dep_time)
         target_time = self.state.departure_time + 24.0
         done = self.state.current_hour >= target_time
         
         return self._get_obs(), reward, done, {"info": "step successful"}
 
     def _get_obs(self) -> Observation:
-            """Helper to convert internal state to a public Observation object."""
-            return Observation(
-                current_soc=self.state.current_soc,
-                battery_health_soh=self.state.battery_health_soh,
-                electricity_price_inr=self.state.electricity_price_inr,
-                is_grid_active=self.state.is_grid_active,
-                time_of_day=self.state.time_of_day,
-                user_type=self.state.user_type,
-                target_soc=self.state.target_soc,
-                user_history=self.state.user_history
-            )
+        return Observation(
+            current_soc=self.state.current_soc,
+            battery_health_soh=self.state.battery_health_soh,
+            electricity_price_inr=self.state.electricity_price_inr,
+            is_grid_active=self.state.is_grid_active,
+            time_of_day=self.state.time_of_day,
+            user_type=self.state.user_type,
+            target_soc=self.state.target_soc,
+            user_history=self.state.user_history
+        )
