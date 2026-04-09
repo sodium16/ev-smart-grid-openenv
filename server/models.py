@@ -32,3 +32,4 @@ class State(BaseModel):
     user_history: List[float]
     total_bill_inr: float
     departure_time: float
+    grid_violation_count: int = 0

@@ -27,10 +27,10 @@ def calculate_soc_component(state: Dict[str, Any], weight: float) -> float:
     target_soc = state.get("target_soc", 1.0)
     
     if target_soc <= 0:
-        return 0.01 * weight
+        return 0.001 * weight
         
     # Limit internal ratio to 0.99 to avoid hitting boundaries too early
-    ratio = min(current_soc / target_soc, 0.99)
+    ratio = min(current_soc / target_soc, 0.999)
     return weight * ratio
 
 
@@ -50,11 +50,11 @@ def night_charging_grader(state: Dict[str, Any]) -> float:
     # Secondary: cost efficiency (0.0 -> 0.3)
     # ₹350 is a reasonable overnight full-charge bill; reward staying under it
     total_bill = state.get("total_bill_inr", 0.0)
-    cost_ratio = min(total_bill / 350.0, 0.99)
+    cost_ratio = min(total_bill / 350.0, 0.999)
     score += 0.3 * (1.0 - cost_ratio)
 
     # Final enforcement: Must be strictly between (0, 1)
-    return round(max(0.01, min(0.99, score)), 3)
+    return round(max(0.001, min(0.999, score)), 3)
 
 
 night_charging_task = Task(
@@ -83,15 +83,15 @@ def grid_constraint_grader(state: Dict[str, Any]) -> float:
     # Grid constraint adherence (0.0 -> 0.25)
     # Each violation during grid-off costs 0.05
     grid_violations = state.get("grid_violation_count", 0)
-    violation_penalty = min(grid_violations * 0.05, 0.24) # Cap penalty slightly below total weight
+    violation_penalty = min(grid_violations * 0.05, 0.249) # Cap penalty slightly below total weight
     score += (0.25 - violation_penalty)
 
     # Cost awareness (0.0 -> 0.15)
     total_bill = state.get("total_bill_inr", 0.0)
-    cost_ratio = min(total_bill / 400.0, 0.99)
+    cost_ratio = min(total_bill / 400.0, 0.999)
     score += 0.15 * (1.0 - cost_ratio)
 
-    return round(max(0.01, min(0.99, score)), 3)
+    return round(max(0.001, min(0.999, score)), 3)
 
 
 grid_constraint_task = Task(
@@ -121,14 +121,14 @@ def v2g_profit_grader(state: Dict[str, Any]) -> float:
     net_bill = state.get("total_bill_inr", 0.0)
     # Map [-200, 500] -> [1.0, 0.0] linearly
     cost_perf = 1.0 - ((net_bill + 200.0) / 700.0)
-    score += 0.35 * max(0.01, min(0.99, cost_perf))
+    score += 0.35 * max(0.001, min(0.999, cost_perf))
 
     # Component 3: Battery health preservation (0.0 -> 0.25)
     soh = state.get("battery_health_soh", 1.0)
-    health_score = max(0.01, min(0.99, soh)) # Direct map SOH to score component
+    health_score = max(0.001, min(0.999, soh)) # Direct map SOH to score component
     score += 0.25 * health_score
 
-    return round(max(0.01, min(0.99, score)), 3)
+    return round(max(0.001, min(0.999, score)), 3)
 
 
 v2g_profit_task = Task(
