@@ -29,11 +29,8 @@ def get_tasks():
     ]
 
 @app.post("/reset")
-def reset(request: ResetRequest):
-    task = TASK_ID_MAP.get(request.task_name)
-    if not task:
-        raise HTTPException(status_code = 404, detail = 'Task not found')
-    
+def reset(request: ResetRequest = None):
+    #Resets the environment for a specific task.
     obs = env.reset()
     return {"observation": obs}
 
