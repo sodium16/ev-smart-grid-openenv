@@ -21,7 +21,7 @@ python -m venv .venv
 # Windows PowerShell
 .venv\Scripts\Activate.ps1
 # macOS/Linux
-# source .venv/bin/activate
+source .venv/bin/activate
 
 pip install -r requirements.txt
 ```
@@ -31,6 +31,47 @@ pip install -r requirements.txt
 uv sync
 ```
 
+### Configuration: Choose Your LLM Provider
+
+The project uses `.env` file for **all** LLM configuration. No code changes needed!
+
+#### Option 1: OpenAI (Default)
+
+Create `.env` file:
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+```env
+API_BASE_URL=https://api.openai.com/v1
+MODEL_NAME=gpt-4o
+API_KEY=your_openai_api_key_here
+LLM_PROVIDER=openai
+```
+
+#### Option 2: Local Ollama
+
+Edit `.env`:
+```env
+API_BASE_URL=http://localhost:11434/v1
+MODEL_NAME=llama3
+API_KEY=ollama
+LLM_PROVIDER=ollama
+SERVER_URL=http://localhost:7860
+PORT=7860
+```
+
+**Make sure Ollama is running:**
+```bash
+ollama serve
+```
+
+In another terminal, pull the model:
+```bash
+ollama pull llama3
+```
+
 ### Run the API server
 ```bash
 python -m uvicorn server.app:app --host 0.0.0.0 --port 7860
@@ -38,10 +79,32 @@ python -m uvicorn server.app:app --host 0.0.0.0 --port 7860
 
 Server base URL: `http://localhost:7860`
 
+### Run Inference
+```bash
+python inference.py
+```
+
+The inference script will:
+1. Read LLM configuration from `.env` file
+2. Connect to the appropriate LLM provider (OpenAI or Ollama)
+3. Run all three tasks (night_owl, grid_survivor, v2g_profit)
+4. Output structured logs with `[START]`, `[STEP]`, `[END]` markers
+
 ### Validate submission compatibility
 ```bash
 sh validate-submission.sh http://localhost:7860 .
 ```
+
+## Environment Configuration Reference
+
+| Variable | Purpose | OpenAI Example | Ollama Example |
+| --- | --- | --- | --- |
+| `LLM_PROVIDER` | Which LLM to use | `openai` | `ollama` |
+| `API_BASE_URL` | LLM endpoint | `https://api.openai.com/v1` | `http://localhost:11434/v1` |
+| `MODEL_NAME` | Model identifier | `gpt-4o` | `llama3` |
+| `API_KEY` | Authentication key | Your OpenAI key | `ollama` (dummy value) |
+| `SERVER_URL` | Environment server | `http://localhost:7860` | `http://localhost:7860` |
+| `PORT` | API server port | `7860` | `7860` |
 
 ## Why This Environment
 
@@ -211,21 +274,28 @@ Connectivity placeholder for MCP-style checks.
 4. Grade at `/grader/{task_id}`
 5. Emit structured logs (`[START]`, `[STEP]`, `[END]`)
 
-### Environment variables
+### Configuration via .env
 
-Use `.env.example` for defaults:
+**All LLM configuration is controlled by `.env` file — no code changes needed!**
 
-| Variable | Purpose | Example |
-| --- | --- | --- |
-| `API_BASE_URL` | OpenAI-compatible endpoint | `https://api.openai.com/v1` |
-| `MODEL_NAME` | Model identifier | `gpt-4o` or `llama3` |
-| `HF_TOKEN` | API key/token | `your_openai_key_here` |
-| `PORT` | Server port | `7860` |
+Use `.env.example` as a template:
 
-Run inference:
+```bash
+cp .env.example .env
+# Edit .env with your preferred LLM provider
+```
+
+Then run inference:
 ```bash
 python inference.py
 ```
+
+The script automatically reads all settings from `.env`:
+- `LLM_PROVIDER` (openai or ollama)
+- `API_BASE_URL` (endpoint URL)
+- `MODEL_NAME` (model identifier)
+- `API_KEY` (authentication)
+- `SERVER_URL` (environment API server)
 
 ## Docker
 
@@ -270,10 +340,10 @@ ev-smart-grid-openenv/
 │   ├── models.py
 │   ├── tasks.py
 │   └── utils.py
-├── .env
-├── .env.example
+├── .env                    # ← Create this from .env.example
+├── .env.example            # ← Configuration template
 ├── Dockerfile
-├── inference.py
+├── inference.py            # ← Uses .env for LLM config
 ├── openenv.yaml
 ├── pyproject.toml
 ├── requirements.txt
@@ -287,7 +357,8 @@ ev-smart-grid-openenv/
 - FastAPI
 - Pydantic
 - Uvicorn
-- OpenAI Python SDK
+- OpenAI Python SDK (OpenAI-compatible)
+- python-dotenv (environment configuration)
 - Requests/httpx
 - OpenEnv Core
 

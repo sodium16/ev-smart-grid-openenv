@@ -2,32 +2,53 @@
 """
 inference.py - OpenEnv Inference Script for Tata Nexon EV Smart Grid
 Runs all three tasks with LLM policy and emits structured logs.
+
+Configuration: All LLM settings are controlled via .env file
+- For OpenAI: Set LLM_PROVIDER=openai, API_BASE_URL=https://api.openai.com/v1
+- For Ollama: Set LLM_PROVIDER=ollama, API_BASE_URL=http://localhost:11434/v1
 """
 
 import os
 import json
 import textwrap
 from typing import List, Dict, Any, Optional
+from pathlib import Path
 
+from dotenv import load_dotenv
 from openai import OpenAI
 import requests
 
-# Environment variables — NO defaults for critical ones
-API_BASE_URL = os.getenv("API_BASE_URL") or "https://api.openai.com/v1"
-MODEL_NAME = os.getenv("MODEL_NAME") or "gpt-3.5-turbo"
-HF_TOKEN = os.getenv("HF_TOKEN")
+# Load .env file if it exists
+env_path = Path(".env")
+if env_path.exists():
+    load_dotenv(env_path)
+else:
+    load_dotenv(".env.example")
 
-if not HF_TOKEN:
-    raise ValueError("HF_TOKEN environment variable is required")
+# === CONFIGURATION FROM .env ===
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1").strip()
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o").strip()
+API_KEY = os.getenv("API_KEY", "").strip()
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").strip().lower()
+SERVER_URL = os.getenv("SERVER_URL", "http://localhost:7860").strip()
 
-# Initialize OpenAI Client
+# Validation
+if not API_KEY:
+    raise ValueError(
+        "API_KEY environment variable is required. "
+        "Set it in .env file (OpenAI key or 'ollama' for local Ollama)"
+    )
+
+if LLM_PROVIDER not in ("openai", "ollama"):
+    raise ValueError(
+        f"LLM_PROVIDER must be 'openai' or 'ollama', got: {LLM_PROVIDER}"
+    )
+
+# === INITIALIZE CLIENT ===
 client = OpenAI(
-    api_key=HF_TOKEN,
+    api_key=API_KEY,
     base_url=API_BASE_URL
 )
-
-# Server endpoint (local or remote)
-SERVER_URL = os.getenv("SERVER_URL", "http://localhost:7860")
 
 SYSTEM_PROMPT = textwrap.dedent(
     """
@@ -127,6 +148,7 @@ def get_lm_action(step: int, obs: Dict[str, Any], last_reward: float) -> float:
             return charge_rate
         except ValueError:
             # If parsing fails, return safe default (no action)
+            print(f"[DEBUG] Failed to parse LLM response: {text}", flush=True)
             return 0.0
             
     except Exception as exc:
@@ -230,7 +252,8 @@ def run_task(task_id: str) -> Dict[str, Any]:
 
 def main() -> None:
     """Run all three tasks"""
-    print("[DEBUG] Starting inference.py", flush=True)
+    print(f"[DEBUG] Starting inference.py", flush=True)
+    print(f"[DEBUG] LLM_PROVIDER: {LLM_PROVIDER}", flush=True)
     print(f"[DEBUG] API_BASE_URL: {API_BASE_URL}", flush=True)
     print(f"[DEBUG] MODEL_NAME: {MODEL_NAME}", flush=True)
     print(f"[DEBUG] SERVER_URL: {SERVER_URL}", flush=True)
