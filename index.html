@@ -1,0 +1,2620 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NexonGuard — EV Smart Grid Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@400;500;600;700&family=Bebas+Neue&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f1117;
+        --bg2: #161b25;
+        --bg3: #1c2333;
+        --bg4: #222a3a;
+        --border: #2a3548;
+        --border2: #334060;
+        --cyan: #38bdf8;
+        --cyan2: #0ea5e9;
+        --green: #4ade80;
+        --green2: #16a34a;
+        --amber: #fbbf24;
+        --amber2: #d97706;
+        --red: #f87171;
+        --red2: #dc2626;
+        --purple: #a78bfa;
+        --text: #e2e8f0;
+        --text2: #94a3b8;
+        --text3: #4b6080;
+        --mono: "IBM Plex Mono", monospace;
+        --sans: "DM Sans", sans-serif;
+        --display: "Bebas Neue", sans-serif;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* TOPBAR */
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 9px 18px;
+        background: var(--bg2);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        z-index: 10;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+      .brand-icon {
+        width: 34px;
+        height: 34px;
+        background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+      }
+      .brand-name {
+        font-family: var(--display);
+        font-size: 20px;
+        letter-spacing: 2px;
+        color: var(--cyan);
+      }
+      .brand-sub {
+        font-size: 10px;
+        color: var(--text3);
+        letter-spacing: 1px;
+        font-family: var(--mono);
+      }
+
+      .topbar-tasks {
+        display: flex;
+        gap: 6px;
+        flex: 1;
+        justify-content: center;
+      }
+      .task-btn {
+        padding: 6px 16px;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text2);
+        cursor: pointer;
+        font-family: var(--sans);
+        font-weight: 600;
+        font-size: 12px;
+        transition: all 0.18s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+      }
+      .task-btn:hover {
+        border-color: var(--border2);
+        color: var(--text);
+        background: var(--bg3);
+      }
+      .task-btn.active-easy {
+        border-color: var(--green);
+        background: #4ade8015;
+        color: var(--green);
+      }
+      .task-btn.active-medium {
+        border-color: var(--amber);
+        background: #fbbf2415;
+        color: var(--amber);
+      }
+      .task-btn.active-hard {
+        border-color: var(--red);
+        background: #f8717115;
+        color: var(--red);
+      }
+      .task-diff {
+        font-size: 9px;
+        font-family: var(--mono);
+        letter-spacing: 1px;
+        opacity: 0.65;
+        text-transform: uppercase;
+      }
+
+      .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .btn {
+        padding: 7px 18px;
+        border-radius: 7px;
+        border: 1px solid;
+        font-family: var(--sans);
+        font-weight: 700;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.18s;
+        letter-spacing: 0.5px;
+      }
+      .btn-go {
+        background: var(--cyan2);
+        border-color: var(--cyan);
+        color: #000;
+      }
+      .btn-go:hover {
+        background: var(--cyan);
+        box-shadow: 0 0 18px #38bdf840;
+      }
+      .btn-go:disabled {
+        background: var(--border);
+        border-color: var(--border);
+        color: var(--text3);
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      .btn-stop {
+        background: transparent;
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .btn-stop:hover {
+        background: #f8717115;
+      }
+      .btn-reset {
+        background: transparent;
+        border-color: var(--border);
+        color: var(--text2);
+      }
+      .btn-reset:hover {
+        border-color: var(--border2);
+        color: var(--text);
+      }
+
+      .speed-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0 8px;
+        border-left: 1px solid var(--border);
+      }
+      .speed-label {
+        font-size: 10px;
+        color: var(--text3);
+        font-family: var(--mono);
+        margin-right: 2px;
+      }
+      .spd {
+        width: 28px;
+        height: 26px;
+        border-radius: 5px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text3);
+        font-family: var(--mono);
+        font-size: 10px;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .spd:hover {
+        border-color: var(--cyan);
+        color: var(--cyan);
+      }
+      .spd.on {
+        border-color: var(--cyan);
+        background: #38bdf820;
+        color: var(--cyan);
+      }
+
+      .sv-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text3);
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--text3);
+      }
+      .dot.live {
+        background: var(--green);
+        box-shadow: 0 0 6px var(--green);
+        animation: blink 2s infinite;
+      }
+      .dot.dead {
+        background: var(--red);
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      /* WORKSPACE */
+      .workspace {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 288px 1fr 330px;
+        min-height: 0;
+      }
+
+      /* LEFT */
+      .left-col {
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: var(--bg2);
+      }
+
+      .col-head {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text3);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      /* SOC HERO */
+      .soc-hero {
+        padding: 16px 14px 12px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+      .soc-arc-wrap {
+        position: relative;
+        width: 150px;
+        height: 90px;
+      }
+      .soc-arc-wrap svg {
+        overflow: visible;
+      }
+      .soc-pct-big {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: var(--display);
+        font-size: 40px;
+        line-height: 1;
+        color: var(--cyan);
+        transition: color 0.4s;
+        white-space: nowrap;
+      }
+      .soc-sub {
+        font-size: 10px;
+        color: var(--text3);
+        font-family: var(--mono);
+        letter-spacing: 1px;
+      }
+      .soc-bar-row {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .soc-bar-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9px;
+        font-family: var(--mono);
+        color: var(--text3);
+      }
+      .soc-track {
+        height: 11px;
+        border-radius: 6px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: visible;
+      }
+      .soc-fill {
+        height: 100%;
+        border-radius: 6px;
+        background: linear-gradient(90deg, var(--cyan2), var(--cyan));
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+      .soc-fill::after {
+        content: "";
+        position: absolute;
+        right: -1px;
+        top: -1px;
+        bottom: -1px;
+        width: 3px;
+        background: white;
+        border-radius: 2px;
+        opacity: 0.9;
+      }
+      .soc-target-pin {
+        position: absolute;
+        top: -5px;
+        bottom: -5px;
+        width: 2px;
+        background: var(--amber);
+        transition: left 0.3s;
+      }
+      .soc-target-pin::before {
+        content: "TARGET";
+        position: absolute;
+        bottom: calc(100% + 3px);
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 7px;
+        font-family: var(--mono);
+        color: var(--amber);
+        white-space: nowrap;
+        letter-spacing: 1px;
+      }
+
+      /* NARRATIVE */
+      .narrative-box {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .box-title {
+        font-size: 9px;
+        font-family: var(--mono);
+        color: var(--text3);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .narrative-text {
+        font-size: 12px;
+        color: var(--text);
+        line-height: 1.6;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 9px 11px;
+        min-height: 56px;
+        transition: all 0.3s;
+      }
+      .narrative-text em {
+        color: var(--cyan);
+        font-style: normal;
+        font-weight: 600;
+      }
+      .narrative-text .good {
+        color: var(--green);
+        font-weight: 600;
+      }
+      .narrative-text .bad {
+        color: var(--red);
+        font-weight: 600;
+      }
+      .narrative-text .warn {
+        color: var(--amber);
+        font-weight: 600;
+      }
+
+      /* DECISION */
+      .decision-box {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .decision-card {
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        overflow: hidden;
+      }
+      .decision-action-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 9px 11px;
+        border-bottom: 1px solid var(--border);
+      }
+      .action-arrow {
+        font-family: var(--display);
+        font-size: 26px;
+        line-height: 1;
+        transition: color 0.3s;
+      }
+      .action-arrow.charging {
+        color: var(--cyan);
+      }
+      .action-arrow.discharging {
+        color: var(--purple);
+      }
+      .action-arrow.idle {
+        color: var(--text3);
+      }
+      .action-kw {
+        font-family: var(--mono);
+        font-size: 18px;
+        font-weight: 600;
+        transition: color 0.3s;
+      }
+      .action-mode-label {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+      }
+      .action-mode-label.charging {
+        background: #38bdf820;
+        color: var(--cyan);
+        border: 1px solid var(--cyan);
+      }
+      .action-mode-label.discharging {
+        background: #a78bfa20;
+        color: var(--purple);
+        border: 1px solid var(--purple);
+      }
+      .action-mode-label.idle {
+        background: var(--bg3);
+        color: var(--text3);
+        border: 1px solid var(--border);
+      }
+      .decision-reason {
+        padding: 7px 11px;
+        font-size: 11px;
+        color: var(--text2);
+        line-height: 1.55;
+      }
+
+      /* STATS */
+      .stats-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        background: var(--border);
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .stat {
+        background: var(--bg2);
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .stat-l {
+        font-size: 9px;
+        font-family: var(--mono);
+        color: var(--text3);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .stat-v {
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 600;
+        transition: color 0.3s;
+      }
+      .stat-note {
+        font-size: 9px;
+        color: var(--text3);
+        margin-top: 1px;
+      }
+
+      /* CENTER */
+      .center-col {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* TICKER */
+      .ticker-strip {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg2);
+        flex-shrink: 0;
+        overflow-x: auto;
+      }
+      .ticker-item {
+        padding: 8px 16px;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex-shrink: 0;
+      }
+      .tick-l {
+        font-size: 9px;
+        font-family: var(--mono);
+        color: var(--text3);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .tick-v {
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+      .tick-v.up {
+        color: var(--green);
+      }
+      .tick-v.down {
+        color: var(--red);
+      }
+      .tick-v.neutral {
+        color: var(--text);
+      }
+
+      /* CHART */
+      .chart-area {
+        flex: 1;
+        min-height: 0;
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .chart-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .chart-title-text {
+        font-size: 12px;
+        color: var(--text2);
+        font-weight: 600;
+      }
+      .legend {
+        display: flex;
+        gap: 12px;
+      }
+      .leg {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10px;
+        color: var(--text3);
+        font-family: var(--mono);
+      }
+      .leg-dot {
+        width: 10px;
+        height: 3px;
+        border-radius: 2px;
+      }
+      .chart-canvas-wrap {
+        flex: 1;
+        min-height: 0;
+        position: relative;
+      }
+      canvas {
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      /* EVENT FEED */
+      .event-feed-area {
+        border-top: 1px solid var(--border);
+        background: var(--bg2);
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        max-height: 170px;
+      }
+      .event-feed-inner {
+        overflow-y: auto;
+        padding: 6px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+      }
+      .event-entry {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        padding: 4px 7px;
+        border-radius: 5px;
+        font-size: 11px;
+        line-height: 1.5;
+        animation: slideup 0.22s ease;
+        border-left: 2px solid;
+      }
+      @keyframes slideup {
+        from {
+          opacity: 0;
+          transform: translateY(3px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .event-entry.info {
+        border-color: var(--cyan);
+        background: #38bdf808;
+        color: var(--text2);
+      }
+      .event-entry.good {
+        border-color: var(--green);
+        background: #4ade8008;
+        color: var(--green);
+      }
+      .event-entry.bad {
+        border-color: var(--red);
+        background: #f8717108;
+        color: var(--red);
+      }
+      .event-entry.warn {
+        border-color: var(--amber);
+        background: #fbbf2408;
+        color: var(--amber);
+      }
+      .event-entry.plain {
+        border-color: var(--border);
+        color: var(--text3);
+      }
+      .event-icon {
+        font-size: 13px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .event-body {
+        flex: 1;
+      }
+      .event-time {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--text3);
+        margin-right: 5px;
+      }
+
+      /* PROGRESS */
+      .progress-bar-row {
+        padding: 7px 14px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex-shrink: 0;
+        background: var(--bg2);
+      }
+      .prog-track {
+        flex: 1;
+        height: 5px;
+        background: var(--bg);
+        border-radius: 3px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+      .prog-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--cyan2), var(--cyan));
+        border-radius: 3px;
+        transition: width 0.4s ease;
+        box-shadow: 0 0 5px var(--cyan2);
+      }
+      .prog-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text3);
+        white-space: nowrap;
+      }
+
+      /* RIGHT */
+      .right-col {
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: var(--bg2);
+      }
+
+      /* SCORE */
+      .score-area {
+        padding: 14px;
+        border-bottom: 1px solid var(--border);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .score-area.show {
+        display: flex;
+      }
+      .score-ring-wrap {
+        position: relative;
+        width: 110px;
+        height: 110px;
+      }
+      .score-ring-wrap svg {
+        transform: rotate(-90deg);
+      }
+      .score-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+      }
+      .score-big {
+        font-family: var(--display);
+        font-size: 34px;
+        color: var(--cyan);
+        line-height: 1;
+        transition: color 0.5s;
+      }
+      .score-lbl {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--text3);
+        letter-spacing: 2px;
+      }
+      .verdict {
+        font-family: var(--sans);
+        font-weight: 700;
+        font-size: 12px;
+        padding: 4px 14px;
+        border-radius: 20px;
+        letter-spacing: 1px;
+        border: 1px solid;
+      }
+      .verdict.pass {
+        color: var(--green);
+        border-color: var(--green);
+        background: #4ade8015;
+      }
+      .verdict.fail {
+        color: var(--red);
+        border-color: var(--red);
+        background: #f8717115;
+      }
+      .score-breakdown {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .score-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+      }
+      .score-row-label {
+        color: var(--text2);
+      }
+      .score-row-val {
+        font-family: var(--mono);
+        font-weight: 600;
+      }
+
+      /* GRID PANEL */
+      .grid-panel {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .panel-lbl {
+        font-size: 9px;
+        font-family: var(--mono);
+        color: var(--text3);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .grid-status-display {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 9px 11px;
+        border-radius: 7px;
+        border: 1px solid;
+        transition: all 0.3s;
+      }
+      .grid-status-display.on {
+        border-color: var(--green);
+        background: #4ade8010;
+      }
+      .grid-status-display.off {
+        border-color: var(--red);
+        background: #f8717110;
+      }
+      .grid-icon {
+        font-size: 22px;
+      }
+      .grid-text-col {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .grid-main-text {
+        font-weight: 700;
+        font-size: 13px;
+        transition: color 0.3s;
+      }
+      .grid-main-text.on {
+        color: var(--green);
+      }
+      .grid-main-text.off {
+        color: var(--red);
+      }
+      .grid-sub-text {
+        font-size: 10px;
+        color: var(--text3);
+      }
+      .grid-stability {
+        margin-left: auto;
+        text-align: right;
+      }
+      .stab-val {
+        font-family: var(--mono);
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .stab-lbl {
+        font-size: 9px;
+        color: var(--text3);
+        font-family: var(--mono);
+      }
+
+      /* PRICE PANEL */
+      .price-panel {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .price-display {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 9px 11px;
+        border-radius: 7px;
+        border: 1px solid;
+        transition: all 0.3s;
+      }
+      .price-display.peak {
+        border-color: var(--amber);
+        background: #fbbf2410;
+      }
+      .price-display.offpeak {
+        border-color: var(--green);
+        background: #4ade8010;
+      }
+      .price-big {
+        font-family: var(--display);
+        font-size: 34px;
+        line-height: 1;
+        transition: color 0.3s;
+      }
+      .price-unit-col {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .price-unit-text {
+        font-size: 10px;
+        color: var(--text3);
+        font-family: var(--mono);
+      }
+      .price-mode-badge {
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .price-mode-badge.peak {
+        background: #fbbf2420;
+        color: var(--amber);
+        border: 1px solid var(--amber);
+      }
+      .price-mode-badge.offpeak {
+        background: #4ade8020;
+        color: var(--green);
+        border: 1px solid var(--green);
+      }
+      .price-why {
+        margin-top: 7px;
+        font-size: 10px;
+        color: var(--text3);
+        line-height: 1.55;
+      }
+
+      /* BATTERY HEALTH */
+      .battery-panel {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .soh-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+      .battery-icon-wrap {
+        position: relative;
+        width: 48px;
+        height: 26px;
+      }
+      .battery-body {
+        position: absolute;
+        inset: 0;
+        border: 2px solid var(--border2);
+        border-radius: 4px;
+        right: 5px;
+      }
+      .battery-cap {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 5px;
+        height: 11px;
+        border-radius: 0 2px 2px 0;
+        background: var(--border2);
+      }
+      .battery-fill-inner {
+        position: absolute;
+        left: 2px;
+        top: 2px;
+        bottom: 2px;
+        border-radius: 2px;
+        background: var(--green);
+        transition:
+          width 0.5s,
+          background 0.5s;
+      }
+      .soh-val {
+        font-family: var(--display);
+        font-size: 30px;
+        color: var(--green);
+        line-height: 1;
+        transition: color 0.3s;
+      }
+      .soh-info {
+        font-size: 10px;
+        color: var(--text3);
+        line-height: 1.55;
+      }
+
+      /* HISTORY */
+      .history-panel {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .history-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+      }
+      .hist-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 7px;
+        border-radius: 5px;
+        font-size: 10px;
+        border-left: 2px solid transparent;
+        transition: background 0.15s;
+      }
+      .hist-item:hover {
+        background: var(--bg3);
+      }
+      .hist-item.charge {
+        border-color: var(--cyan);
+      }
+      .hist-item.discharge {
+        border-color: var(--purple);
+      }
+      .hist-item.idle {
+        border-color: var(--border);
+      }
+      .hist-item.violation {
+        border-color: var(--red);
+        background: #f8717108;
+      }
+      .hist-step {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--text3);
+        width: 24px;
+        flex-shrink: 0;
+      }
+      .hist-time {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--text3);
+        width: 34px;
+        flex-shrink: 0;
+      }
+      .hist-icon {
+        width: 14px;
+        flex-shrink: 0;
+        text-align: center;
+        font-size: 11px;
+      }
+      .hist-desc {
+        flex: 1;
+        color: var(--text2);
+      }
+      .hist-kw {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--text3);
+        flex-shrink: 0;
+      }
+
+      /* WELCOME */
+      .welcome-overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--bg);
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        transition: opacity 0.5s;
+      }
+      .welcome-overlay.gone {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .welcome-logo {
+        font-family: var(--display);
+        font-size: 58px;
+        color: var(--cyan);
+        letter-spacing: 4px;
+        text-shadow: 0 0 40px #38bdf860;
+      }
+      .welcome-tagline {
+        font-size: 15px;
+        color: var(--text2);
+        max-width: 480px;
+        text-align: center;
+        line-height: 1.7;
+      }
+      .welcome-hint {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        padding: 18px 24px;
+        border-radius: 11px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        max-width: 460px;
+        width: 100%;
+      }
+      .hint-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        font-size: 12px;
+        color: var(--text2);
+      }
+      .hint-icon {
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+      .welcome-btn {
+        padding: 11px 32px;
+        border-radius: 9px;
+        background: var(--cyan2);
+        border: none;
+        color: #000;
+        font-family: var(--sans);
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+        letter-spacing: 0.5px;
+      }
+      .welcome-btn:hover {
+        background: var(--cyan);
+        box-shadow: 0 0 28px #38bdf840;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="welcome-overlay" id="welcomeOverlay">
+      <div class="welcome-logo">⚡ NEXONGUARD</div>
+      <div class="welcome-tagline">
+        Watch an AI agent charge a <strong>Tata Nexon EV</strong> under real
+        Indian grid conditions — load shedding, peak pricing, and battery health
+        all matter.
+      </div>
+      <div class="welcome-hint">
+        <div class="hint-row">
+          <span class="hint-icon">🌙</span
+          ><span
+            ><strong>Night Charging</strong> — Simple. Just charge cheap at
+            night, hit the target before morning.</span
+          >
+        </div>
+        <div class="hint-row">
+          <span class="hint-icon">⚡</span
+          ><span
+            ><strong>Grid Constraint</strong> — Harder. The grid cuts out
+            randomly. Don't charge during outages or you lose points.</span
+          >
+        </div>
+        <div class="hint-row">
+          <span class="hint-icon">💰</span
+          ><span
+            ><strong>V2G Profit</strong> — Expert. Sell power back to the grid
+            at peak prices, buy it back cheap at night. Make a profit!</span
+          >
+        </div>
+      </div>
+      <button class="welcome-btn" onclick="closeWelcome()">
+        Start Exploring →
+      </button>
+    </div>
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div>
+          <div class="brand-name">NEXONGUARD</div>
+          <div class="brand-sub">EV SMART GRID SIM</div>
+        </div>
+      </div>
+      <div class="topbar-tasks">
+        <button
+          class="task-btn"
+          id="tbtn-night_owl"
+          onclick="selectTask('night_owl')"
+        >
+          🌙 Night Charging<span class="task-diff">Easy · 48 Steps</span>
+        </button>
+        <button
+          class="task-btn"
+          id="tbtn-grid_survivor"
+          onclick="selectTask('grid_survivor')"
+        >
+          ⚡ Grid Constraint<span class="task-diff">Medium · 48 Steps</span>
+        </button>
+        <button
+          class="task-btn"
+          id="tbtn-v2g_profit"
+          onclick="selectTask('v2g_profit')"
+        >
+          💰 V2G Profit<span class="task-diff">Hard · 72 Steps</span>
+        </button>
+      </div>
+      <div class="topbar-right">
+        <div class="speed-row">
+          <span class="speed-label">SPEED</span>
+          <button class="spd" data-ms="900" onclick="setSpeed(900)">1×</button>
+          <button class="spd on" data-ms="400" onclick="setSpeed(400)">
+            2×
+          </button>
+          <button class="spd" data-ms="150" onclick="setSpeed(150)">5×</button>
+          <button class="spd" data-ms="30" onclick="setSpeed(30)">⚡</button>
+        </div>
+        <button class="btn btn-go" id="btnGo" onclick="handleGo()" disabled>
+          ▶ Run
+        </button>
+        <button class="btn btn-stop hidden" id="btnStop" onclick="stopSim()">
+          ■ Stop
+        </button>
+        <button class="btn btn-reset" onclick="fullReset()">↺ Reset</button>
+        <div class="sv-badge">
+          <div class="dot" id="svDot"></div>
+          <span id="svLabel">DEMO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <!-- LEFT COL -->
+      <div class="left-col">
+        <div class="col-head">
+          <span>Battery Status</span>
+          <span id="simTimeLabel" style="color: var(--text2); font-size: 11px"
+            >—</span
+          >
+        </div>
+
+        <div class="soc-hero">
+          <div class="soc-arc-wrap">
+            <svg width="150" height="90" viewBox="0 0 150 90">
+              <path
+                d="M 15 85 A 65 65 0 0 1 135 85"
+                fill="none"
+                stroke="#1c2333"
+                stroke-width="11"
+                stroke-linecap="round"
+              />
+              <path
+                id="arcFill"
+                d="M 15 85 A 65 65 0 0 1 135 85"
+                fill="none"
+                stroke="#38bdf8"
+                stroke-width="11"
+                stroke-linecap="round"
+                stroke-dasharray="204"
+                stroke-dashoffset="204"
+                style="
+                  transition:
+                    stroke-dashoffset 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+                    stroke 0.4s;
+                "
+              />
+              <line
+                id="targetTick"
+                x1="75"
+                y1="22"
+                x2="75"
+                y2="32"
+                stroke="#fbbf24"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              />
+            </svg>
+            <div class="soc-pct-big" id="socBig">—</div>
+          </div>
+          <div class="soc-sub">STATE OF CHARGE</div>
+          <div class="soc-bar-row">
+            <div class="soc-bar-labels">
+              <span>0% Empty</span>
+              <span id="targetLabel" style="color: var(--amber)"
+                >Target: —</span
+              >
+              <span>100% Full</span>
+            </div>
+            <div class="soc-track">
+              <div class="soc-fill" id="socFill" style="width: 0%"></div>
+              <div
+                class="soc-target-pin"
+                id="targetPin"
+                style="left: 80%"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="narrative-box">
+          <div class="box-title">📖 What Just Happened</div>
+          <div class="narrative-text" id="narrativeText">
+            Select a task above and press <strong>Run</strong> to start. Each
+            step = <em>15 minutes</em> of simulated real time.
+          </div>
+        </div>
+
+        <div class="decision-box">
+          <div class="box-title">🤖 Agent's Decision This Step</div>
+          <div class="decision-card">
+            <div class="decision-action-row">
+              <div class="action-arrow idle" id="actionArrow">→</div>
+              <div class="action-kw" id="actionKw" style="color: var(--text3)">
+                — kW
+              </div>
+              <div style="margin-left: auto">
+                <div class="action-mode-label idle" id="actionLabel">
+                  WAITING
+                </div>
+              </div>
+            </div>
+            <div class="decision-reason" id="decisionReason">
+              The agent hasn't started yet. Once running, you'll see its
+              reasoning here each step.
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-l">Total Bill</div>
+            <div class="stat-v" id="statBill" style="color: var(--amber)">
+              ₹—
+            </div>
+            <div class="stat-note" id="statBillNote">Running cost</div>
+          </div>
+          <div class="stat">
+            <div class="stat-l">Last Reward</div>
+            <div class="stat-v" id="statReward" style="color: var(--text3)">
+              —
+            </div>
+            <div class="stat-note">Per-step score</div>
+          </div>
+          <div class="stat">
+            <div class="stat-l">Violations</div>
+            <div class="stat-v" id="statViol" style="color: var(--text3)">
+              0
+            </div>
+            <div class="stat-note">Grid-off charges</div>
+          </div>
+          <div class="stat">
+            <div class="stat-l">Progress</div>
+            <div class="stat-v" id="statStep" style="color: var(--text2)">
+              0 / —
+            </div>
+            <div class="stat-note" id="statEta">— sim-time left</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER COL -->
+      <div class="center-col">
+        <div class="ticker-strip">
+          <div class="ticker-item">
+            <div class="tick-l">Sim Time</div>
+            <div class="tick-v neutral" id="tickTime">22:00</div>
+          </div>
+          <div class="ticker-item">
+            <div class="tick-l">Price / kWh</div>
+            <div class="tick-v" id="tickPrice" style="color: var(--text3)">
+              —
+            </div>
+          </div>
+          <div class="ticker-item">
+            <div class="tick-l">Grid</div>
+            <div class="tick-v" id="tickGrid" style="color: var(--text3)">
+              —
+            </div>
+          </div>
+          <div class="ticker-item">
+            <div class="tick-l">Charge Rate</div>
+            <div class="tick-v" id="tickRate" style="color: var(--text3)">
+              —
+            </div>
+          </div>
+          <div class="ticker-item">
+            <div class="tick-l">Batt. Health</div>
+            <div class="tick-v" id="tickSoh" style="color: var(--text3)">—</div>
+          </div>
+          <div class="ticker-item">
+            <div class="tick-l">User</div>
+            <div class="tick-v neutral" id="tickUser">—</div>
+          </div>
+          <div class="ticker-item">
+            <div class="tick-l">Task</div>
+            <div class="tick-v neutral" id="tickTask">—</div>
+          </div>
+        </div>
+
+        <div class="chart-area">
+          <div class="chart-header">
+            <div class="chart-title-text">⏱ Real-time Simulation Timeline</div>
+            <div class="legend">
+              <div class="leg">
+                <div class="leg-dot" style="background: var(--cyan)"></div>
+                Battery %
+              </div>
+              <div class="leg">
+                <div class="leg-dot" style="background: var(--amber)"></div>
+                Price ₹
+              </div>
+              <div class="leg">
+                <div class="leg-dot" style="background: var(--green)"></div>
+                Charging kW
+              </div>
+              <div class="leg">
+                <div class="leg-dot" style="background: var(--purple)"></div>
+                Discharging kW
+              </div>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap"><canvas id="chart"></canvas></div>
+        </div>
+
+        <div class="event-feed-area">
+          <div class="col-head" style="padding: 7px 14px">
+            <span>📡 Live Events</span>
+            <span
+              style="font-size: 10px; cursor: pointer; color: var(--text3)"
+              onclick="clearEvents()"
+              >CLEAR</span
+            >
+          </div>
+          <div class="event-feed-inner" id="eventFeed"></div>
+        </div>
+
+        <div class="progress-bar-row">
+          <div class="prog-label" id="progLabel">Select a task to begin</div>
+          <div class="prog-track">
+            <div class="prog-fill" id="progFill" style="width: 0%"></div>
+          </div>
+          <div class="prog-label" id="progPct">0%</div>
+        </div>
+      </div>
+
+      <!-- RIGHT COL -->
+      <div class="right-col">
+        <div class="col-head"><span>Environment State</span></div>
+
+        <div class="score-area" id="scoreArea">
+          <div class="score-ring-wrap">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle
+                cx="55"
+                cy="55"
+                r="46"
+                fill="none"
+                stroke="#1c2333"
+                stroke-width="9"
+              />
+              <circle
+                id="scoreCircle"
+                cx="55"
+                cy="55"
+                r="46"
+                fill="none"
+                stroke="#38bdf8"
+                stroke-width="9"
+                stroke-linecap="round"
+                stroke-dasharray="289"
+                stroke-dashoffset="289"
+                style="
+                  transition:
+                    stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    stroke 0.5s;
+                "
+              />
+            </svg>
+            <div class="score-overlay">
+              <div class="score-big" id="scoreBig">0.00</div>
+              <div class="score-lbl">FINAL SCORE</div>
+            </div>
+          </div>
+          <div class="verdict" id="verdictBadge"></div>
+          <div class="score-breakdown" id="scoreBreakdown"></div>
+        </div>
+
+        <div class="grid-panel">
+          <div class="panel-lbl">🔌 Grid Connection</div>
+          <div class="grid-status-display on" id="gridDisplay">
+            <div class="grid-icon" id="gridIcon">✅</div>
+            <div class="grid-text-col">
+              <div class="grid-main-text on" id="gridMainText">GRID ACTIVE</div>
+              <div class="grid-sub-text" id="gridSubText">
+                Power flowing normally
+              </div>
+            </div>
+            <div class="grid-stability">
+              <div class="stab-val" id="stabVal" style="color: var(--green)">
+                —
+              </div>
+              <div class="stab-lbl">STABILITY</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="price-panel">
+          <div class="panel-lbl">💡 Electricity Rate</div>
+          <div class="price-display offpeak" id="priceDisplay">
+            <div class="price-big" id="priceBig" style="color: var(--text3)">
+              —
+            </div>
+            <div class="price-unit-col">
+              <div class="price-unit-text">INR per kWh</div>
+              <div class="price-mode-badge offpeak" id="priceBadge">
+                OFF-PEAK
+              </div>
+            </div>
+          </div>
+          <div class="price-why" id="priceWhy">
+            Prices are cheaper off-peak (night). The agent charges more
+            aggressively when electricity is cheap.
+          </div>
+        </div>
+
+        <div class="battery-panel">
+          <div class="panel-lbl">🔋 Battery Health (SOH)</div>
+          <div class="soh-row">
+            <div class="battery-icon-wrap">
+              <div class="battery-body"></div>
+              <div class="battery-cap"></div>
+              <div
+                class="battery-fill-inner"
+                id="sohFillInner"
+                style="width: 90%"
+              ></div>
+            </div>
+            <div class="soh-val" id="sohBig">—</div>
+          </div>
+          <div class="soh-info" id="sohInfo">
+            Battery health starts at 100%. Fast charging and V2G discharge wear
+            it down. Lower health = less real-world range.
+          </div>
+        </div>
+
+        <div class="history-panel">
+          <div class="col-head">
+            <span>Step History</span>
+            <span
+              style="font-size: 10px; cursor: pointer; color: var(--text3)"
+              onclick="clearHistory()"
+              >CLEAR</span
+            >
+          </div>
+          <div class="history-scroll" id="historyScroll"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+      // ═══════════════════════════════════════
+      // STATE
+      // ═══════════════════════════════════════
+      const SERVER = "http://localhost:7860";
+      let task = null,
+        running = false,
+        timer = null,
+        speed = 400;
+      let step = 0,
+        maxSteps = 48;
+      let obs = null,
+        lastRate = 0,
+        totalBill = 0,
+        violations = 0,
+        lastStability = 1.0;
+      let prevSoc = 0;
+
+      // ═══════════════════════════════════════
+      // CHART
+      // ═══════════════════════════════════════
+      const ch = new Chart(document.getElementById("chart").getContext("2d"), {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "SOC %",
+              data: [],
+              borderColor: "#38bdf8",
+              backgroundColor: "#38bdf812",
+              tension: 0.4,
+              fill: true,
+              pointRadius: 0,
+              borderWidth: 2,
+              yAxisID: "y",
+            },
+            {
+              label: "Price INR",
+              data: [],
+              borderColor: "#fbbf24",
+              backgroundColor: "transparent",
+              tension: 0.1,
+              fill: false,
+              pointRadius: 0,
+              borderWidth: 1.5,
+              borderDash: [5, 4],
+              yAxisID: "y1",
+            },
+            {
+              label: "Charge kW",
+              data: [],
+              borderColor: "#4ade80",
+              backgroundColor: "#4ade8010",
+              tension: 0.35,
+              fill: true,
+              pointRadius: 0,
+              borderWidth: 2,
+              yAxisID: "y2",
+            },
+            {
+              label: "Discharge kW",
+              data: [],
+              borderColor: "#a78bfa",
+              backgroundColor: "#a78bfa10",
+              tension: 0.35,
+              fill: true,
+              pointRadius: 0,
+              borderWidth: 1.5,
+              yAxisID: "y2",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 0 },
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#161b25",
+              borderColor: "#2a3548",
+              borderWidth: 1,
+              titleColor: "#94a3b8",
+              bodyColor: "#e2e8f0",
+              titleFont: { family: "IBM Plex Mono", size: 10 },
+              bodyFont: { family: "IBM Plex Mono", size: 11 },
+              padding: 10,
+              callbacks: {
+                label: (c) => {
+                  const L = c.dataset.label;
+                  if (L === "SOC %")
+                    return ` 🔋 Battery: ${c.parsed.y.toFixed(1)}%`;
+                  if (L === "Price INR")
+                    return ` 💡 Price: ₹${c.parsed.y.toFixed(1)}/kWh`;
+                  if (L === "Charge kW")
+                    return ` ⚡ Charging: ${c.parsed.y.toFixed(2)} kW`;
+                  if (L === "Discharge kW")
+                    return ` 💸 Selling: ${c.parsed.y.toFixed(2)} kW`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: { color: "#1c2333" },
+              ticks: {
+                color: "#4b6080",
+                font: { family: "IBM Plex Mono", size: 9 },
+                maxTicksLimit: 12,
+              },
+            },
+            y: {
+              position: "left",
+              min: 0,
+              max: 100,
+              grid: { color: "#1c233355" },
+              ticks: {
+                color: "#38bdf880",
+                font: { family: "IBM Plex Mono", size: 9 },
+                callback: (v) => v + "%",
+              },
+            },
+            y1: {
+              position: "right",
+              min: 0,
+              max: 14,
+              grid: { display: false },
+              ticks: {
+                color: "#fbbf2460",
+                font: { family: "IBM Plex Mono", size: 9 },
+                callback: (v) => "₹" + v,
+              },
+            },
+            y2: { display: false, min: -18, max: 55 },
+          },
+        },
+      });
+
+      // ═══════════════════════════════════════
+      // SERVER
+      // ═══════════════════════════════════════
+      let serverLive = false;
+      async function checkServer() {
+        try {
+          const r = await fetch(`${SERVER}/health`, {
+            signal: AbortSignal.timeout(3000),
+          });
+          serverLive = r.ok;
+        } catch {
+          serverLive = false;
+        }
+        document.getElementById("svDot").className =
+          "dot " + (serverLive ? "live" : "dead");
+        document.getElementById("svLabel").textContent = serverLive
+          ? "LIVE API"
+          : "DEMO MODE";
+      }
+      checkServer();
+      setInterval(checkServer, 20000);
+
+      // ═══════════════════════════════════════
+      // WELCOME
+      // ═══════════════════════════════════════
+      function closeWelcome() {
+        document.getElementById("welcomeOverlay").classList.add("gone");
+      }
+
+      // ═══════════════════════════════════════
+      // TASK SELECTION
+      // ═══════════════════════════════════════
+      const TASK_NAMES = {
+        night_owl: "Night Charging",
+        grid_survivor: "Grid Constraint",
+        v2g_profit: "V2G Profit",
+      };
+      const TASK_DESCS = {
+        night_owl:
+          "Charge the EV overnight at cheap off-peak rates and reach target battery level before departure.",
+        grid_survivor:
+          "Charge while respecting grid availability — during outages you MUST stop or lose points.",
+        v2g_profit:
+          "Buy cheap electricity at night, sell it back at expensive peak prices. Make a profit!",
+      };
+
+      function selectTask(t) {
+        if (running) return;
+        task = t;
+        maxSteps = t === "v2g_profit" ? 72 : 48;
+        document
+          .querySelectorAll(".task-btn")
+          .forEach((b) => (b.className = "task-btn"));
+        const cls = {
+          night_owl: "easy",
+          grid_survivor: "medium",
+          v2g_profit: "hard",
+        };
+        document.getElementById("tbtn-" + t).className =
+          "task-btn active-" + cls[t];
+        document.getElementById("btnGo").disabled = false;
+        document.getElementById("statStep").textContent = `0 / ${maxSteps}`;
+        document.getElementById("progLabel").textContent =
+          `${TASK_NAMES[t]} · ${maxSteps} steps (each = 15 min)`;
+        document.getElementById("tickTask").textContent = TASK_NAMES[t];
+        setNarrative(
+          `Task <em>${TASK_NAMES[t]}</em> selected. ${TASK_DESCS[t]} Press <strong>Run</strong> to start.`,
+        );
+        addEvent("info", "📋", `Task selected: ${TASK_NAMES[t]}`);
+      }
+
+      // ═══════════════════════════════════════
+      // SIMULATION CONTROL
+      // ═══════════════════════════════════════
+      async function handleGo() {
+        if (!task) return;
+        running = true;
+        step = 0;
+        totalBill = 0;
+        violations = 0;
+        lastStability = 1;
+        prevSoc = 0;
+        document.getElementById("btnGo").classList.add("hidden");
+        document.getElementById("btnStop").classList.remove("hidden");
+        document.getElementById("scoreArea").classList.remove("show");
+        ch.data.labels = [];
+        ch.data.datasets.forEach((d) => (d.data = []));
+        ch.update("none");
+        document.getElementById("progFill").style.width = "0%";
+        document.getElementById("progPct").textContent = "0%";
+
+        addEvent(
+          "info",
+          "🚀",
+          `[START] Launching "${TASK_NAMES[task]}" simulation…`,
+        );
+
+        try {
+          const r = await fetch(`${SERVER}/reset`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task_name: task }),
+            signal: AbortSignal.timeout(5000),
+          });
+          const d = await r.json();
+          obs = d.observation;
+          addEvent(
+            "good",
+            "✅",
+            `Reset done. User: ${obs.user_type} | Start SOC: ${pct(obs.current_soc)} | Target: ${pct(obs.target_soc)}`,
+          );
+        } catch {
+          obs = mockObs();
+          addEvent(
+            "warn",
+            "📡",
+            "Server offline — using built-in demo simulation physics.",
+          );
+        }
+        prevSoc = obs.current_soc;
+        renderObs(obs, 0, null);
+        scheduleStep();
+      }
+
+      function stopSim() {
+        running = false;
+        clearTimeout(timer);
+        document.getElementById("btnGo").classList.remove("hidden");
+        document.getElementById("btnStop").classList.add("hidden");
+        addEvent("warn", "⏹", "Simulation stopped by user.");
+      }
+
+      function fullReset() {
+        stopSim();
+        step = 0;
+        obs = null;
+        totalBill = 0;
+        violations = 0;
+        lastRate = 0;
+        prevSoc = 0;
+        ch.data.labels = [];
+        ch.data.datasets.forEach((d) => (d.data = []));
+        ch.update("none");
+        document.getElementById("progFill").style.width = "0%";
+        document.getElementById("progPct").textContent = "0%";
+        document.getElementById("progLabel").textContent =
+          "Select a task to begin";
+        document.getElementById("scoreArea").classList.remove("show");
+        document.getElementById("btnGo").disabled = !task;
+        document.getElementById("statStep").textContent = "0 / —";
+        document.getElementById("statEta").textContent = "— sim-time left";
+        document.getElementById("simTimeLabel").textContent = "—";
+        setNarrative(
+          "Select a task above and press <strong>Run</strong>. Each step = 15 minutes simulated time.",
+        );
+        resetDecision();
+        addEvent("plain", "↺", "Reset complete. Ready for new run.");
+      }
+
+      function scheduleStep() {
+        if (running) timer = setTimeout(doStep, speed);
+      }
+
+      async function doStep() {
+        if (!running || step >= maxSteps) {
+          finishSim();
+          return;
+        }
+        step++;
+        const rate = computeAction(obs);
+        lastRate = rate;
+
+        let newObs, reward, done;
+        try {
+          const r = await fetch(`${SERVER}/step`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ charge_rate_kw: rate }),
+            signal: AbortSignal.timeout(5000),
+          });
+          const d = await r.json();
+          newObs = d.observation;
+          reward = d.reward || 0;
+          done = d.done || false;
+          // Sync state
+          syncServerState();
+        } catch {
+          const res = physicsStep(obs, rate);
+          newObs = res.obs;
+          reward = res.reward;
+          done = step >= maxSteps;
+        }
+
+        obs = newObs;
+        renderObs(obs, reward, rate);
+        addChartPoint(obs, rate);
+        addHistoryItem(step, obs, rate, reward);
+        updateProgress(step, maxSteps);
+        prevSoc = obs.current_soc;
+
+        if (done || step >= maxSteps) {
+          finishSim();
+          return;
+        }
+        scheduleStep();
+      }
+
+      async function syncServerState() {
+        try {
+          const r = await fetch(`${SERVER}/state`, {
+            signal: AbortSignal.timeout(3000),
+          });
+          const s = await r.json();
+          if (s.total_bill_inr !== undefined) totalBill = s.total_bill_inr;
+          if (s.grid_violation_count !== undefined)
+            violations = s.grid_violation_count;
+        } catch {}
+      }
+
+      async function finishSim() {
+        running = false;
+        clearTimeout(timer);
+        document.getElementById("btnGo").classList.remove("hidden");
+        document.getElementById("btnStop").classList.add("hidden");
+        addEvent(
+          "info",
+          "🏁",
+          `[END] Simulation complete — ${step} steps, ${step * 15} simulated minutes.`,
+        );
+
+        let score = 0;
+        try {
+          const r = await fetch(`${SERVER}/grader/${task}`, {
+            signal: AbortSignal.timeout(5000),
+          });
+          const d = await r.json();
+          score = d.score || 0;
+        } catch {
+          score = estimateScore();
+        }
+        showScore(score);
+      }
+
+      // ═══════════════════════════════════════
+      // SMART POLICY — keeps changing throughout, never stagnates
+      // ═══════════════════════════════════════
+      function computeAction(o) {
+        const soc = o.current_soc,
+          target = o.target_soc;
+        const price = o.electricity_price_inr || 6.5;
+        const gridOn = o.is_grid_active !== false;
+        const isPeak = price >= 9;
+        const soh = o.battery_health_soh || 1.0;
+        const hoursLeft = estimateHoursLeft(o);
+        const urgency = Math.min(
+          1,
+          Math.max(0, (target - soc) / Math.max(0.05, target)),
+        );
+
+        // Grid is off — always 0 (no violation)
+        if (!gridOn) return 0;
+
+        // ── V2G PROFIT: dynamic buy-low / sell-high ──
+        if (task === "v2g_profit") {
+          if (isPeak) {
+            // Sell aggressively when price is high and we have buffer
+            if (soc > 0.4) {
+              const headroom = soc - 0.35; // keep 35% minimum
+              const rate = Math.min(
+                15,
+                headroom * 45 * 4 + 2 + Math.random() * 2,
+              );
+              return -Math.max(1, rate);
+            }
+            // At or near minimum — stop selling, maybe trickle charge
+            return soc < 0.35 ? Math.min(7, (0.4 - soc) * 60) : 0;
+          } else {
+            // Off-peak: buy electricity
+            if (soc < target) {
+              // Throttle near target to avoid waste
+              const gap = target - soc;
+              if (soc > 0.92)
+                return Math.min(7.2, gap * 60 + 1 + Math.random());
+              return Math.min(50, gap * 38 + 6 + Math.random() * 5 - 2);
+            }
+            // Fully charged at off-peak: very slight trickle (simulates phantom drain compensation)
+            return Math.random() > 0.75 ? 1.5 : 0;
+          }
+        }
+
+        // ── GRID SURVIVOR: charge around outages, keep going even near target ──
+        if (task === "grid_survivor") {
+          if (soc >= target) {
+            // Don't just stop! Simulate trickle + respond to price
+            if (!isPeak && soh > 0.98 && Math.random() > 0.6) return 2; // top-up trickle
+            return 0;
+          }
+          const gap = target - soc;
+          if (isPeak) return Math.min(7.2, gap * 22 + 1 + Math.random() * 1.5);
+          // Off-peak: scale with urgency
+          const rate = Math.min(50, urgency * 32 + 5 + Math.random() * 6 - 3);
+          return Math.max(1, rate);
+        }
+
+        // ── NIGHT OWL: cost-aware charging, continues meaningfully after target ──
+        if (soc >= target) {
+          // After target: simulate realistic behaviour — trickle to fight phantom drain,
+          // occasionally do small charges, react to price changes
+          if (!isPeak) return Math.random() > 0.7 ? 1.5 + Math.random() : 0;
+          return 0;
+        }
+        const gap = target - soc;
+        if (isPeak) return Math.min(7.2, gap * 20 + 1 + Math.random());
+        // Off-peak: urgency ramp
+        const rate = Math.min(50, urgency * 35 + 5 + Math.random() * 6 - 3);
+        return Math.max(0.5, rate);
+      }
+
+      function estimateHoursLeft(o) {
+        if (!o || !o.user_history || !o.user_history.length) return 6;
+        const avg =
+          o.user_history.reduce((a, b) => a + b, 0) / o.user_history.length;
+        const nowH =
+          parseFloat((o.time_of_day || "22:00").split(":")[0]) +
+          parseFloat((o.time_of_day || "22:00").split(":")[1] || 0) / 60;
+        let left = avg - nowH;
+        if (left < 0) left += 24;
+        return Math.max(0.25, left);
+      }
+
+      // ═══════════════════════════════════════
+      // PLAIN ENGLISH EXPLANATIONS
+      // ═══════════════════════════════════════
+      function explainDecision(rate, o) {
+        const soc = o.current_soc,
+          target = o.target_soc;
+        const price = o.electricity_price_inr || 6.5;
+        const gridOn = o.is_grid_active !== false;
+        const isPeak = price >= 9;
+        const gap = ((target - soc) * 100).toFixed(1);
+
+        if (!gridOn)
+          return `⚠️ <strong>Grid is down!</strong> There's a power cut right now (load shedding). Charging during an outage = violation penalty. Agent correctly waits.`;
+
+        if (rate < -0.5) {
+          return `💰 <strong>Selling ${Math.abs(rate).toFixed(1)} kW back to the grid</strong> via V2G. Electricity price is ₹${price}/kWh — it's peak time and profitable to discharge. Battery at ${pct(soc)}, safely above safe minimum.`;
+        }
+        if (rate < 0.5) {
+          if (soc >= target && isPeak)
+            return `✅ Battery reached target (${pct(soc)}). Electricity is expensive right now (₹${price}/kWh peak). <strong>Smartly idling</strong> to save money.`;
+          if (soc >= target)
+            return `✅ Battery at target (${pct(soc)}). <strong>Trickle mode</strong> — tiny charge to compensate natural phantom drain.`;
+          if (isPeak)
+            return `🌙 Electricity is <strong>expensive at ₹${price}/kWh</strong> (peak hours). Agent is barely charging to save cost. ${gap}% still needed.`;
+          return `⏸ Grid conditions unstable. Waiting to see if stability improves.`;
+        }
+        if (isPeak)
+          return `⚡ Charging <strong>${rate.toFixed(1)} kW</strong> even during peak (₹${price}/kWh). Still <strong>${gap}% short</strong> of target — departure is approaching, urgency wins over cost.`;
+        if (soc >= target * 0.95)
+          return `⚡ Almost there! Charging <strong>${rate.toFixed(1)} kW</strong> at cheap rate ₹${price}/kWh. Only <em>${gap}%</em> left to target.`;
+        return `⚡ <strong>Charging hard at ${rate.toFixed(1)} kW.</strong> Cheap off-peak price (₹${price}/kWh). ${gap}% gap to target — filling up now while electricity is affordable.`;
+      }
+
+      function buildNarrative(o, reward, rate) {
+        const soc = o.current_soc,
+          target = o.target_soc;
+        const price = o.electricity_price_inr || 6.5;
+        const gridOn = o.is_grid_active !== false;
+        const isPeak = price >= 9;
+        const socDelta = (soc - prevSoc) * 100;
+        const t = o.time_of_day;
+        const parts = [];
+
+        if (!gridOn) {
+          parts.push(
+            `<span class="bad">🚫 Grid outage at ${t}!</span> The utility cut power (load shedding — common in India during peak demand). No charging possible this step.`,
+          );
+        } else if (isPeak) {
+          parts.push(
+            `It's <span class="warn">${t} — peak hour</span>. Electricity costs ₹${price}/kWh (1.5× more than off-peak).`,
+          );
+        } else {
+          parts.push(
+            `It's <em>${t}</em>. Off-peak electricity at ₹${price}/kWh — good time to charge.`,
+          );
+        }
+
+        if (rate < -0.5) {
+          parts.push(
+            `The agent <span class="good">sold ${Math.abs(rate).toFixed(1)} kW</span> back to the grid. Battery dropped from <em>${pct(prevSoc)}</em> → <em>${pct(soc)}</em>.`,
+          );
+        } else if (Math.abs(socDelta) > 0.01) {
+          const sign =
+            socDelta > 0
+              ? `<span class="good">+${socDelta.toFixed(2)}%</span>`
+              : `<span class="bad">${socDelta.toFixed(2)}%</span>`;
+          parts.push(
+            `Battery: <em>${pct(prevSoc)}</em> → <em>${pct(soc)}</em> (${sign} change).`,
+          );
+        } else {
+          parts.push(`Battery held steady at <em>${pct(soc)}</em>.`);
+        }
+
+        if (soc >= target)
+          parts.push(
+            `<span class="good">✓ Target met!</span> EV is ready for departure.`,
+          );
+        else
+          parts.push(
+            `Still <em>${((target - soc) * 100).toFixed(1)}%</em> short of ${pct(target)} target.`,
+          );
+
+        if (reward !== null) {
+          const r = +reward.toFixed(3);
+          parts.push(
+            `Step score: ${r >= 0 ? `<span class="good">+${r}</span>` : `<span class="bad">${r}</span>`}.`,
+          );
+        }
+
+        return parts.join(" ");
+      }
+
+      // ═══════════════════════════════════════
+      // RENDER
+      // ═══════════════════════════════════════
+      function renderObs(o, reward, rate) {
+        const soc = o.current_soc,
+          target = o.target_soc;
+        const price = o.electricity_price_inr || 6.5;
+        const gridOn = o.is_grid_active !== false;
+        const isPeak = price >= 9;
+        const soh = o.battery_health_soh || 1;
+        const t = o.time_of_day || "22:00";
+
+        // SOC arc
+        const arcVal = Math.min(soc, 1) * 204;
+        document.getElementById("arcFill").style.strokeDashoffset =
+          204 - arcVal;
+        const ratio = soc / target;
+        const arcColor =
+          ratio >= 1 ? "#4ade80" : ratio >= 0.7 ? "#38bdf8" : "#fbbf24";
+        document.getElementById("arcFill").style.stroke = arcColor;
+        document.getElementById("socBig").textContent =
+          (soc * 100).toFixed(0) + "%";
+        document.getElementById("socBig").style.color = arcColor;
+        document.getElementById("socFill").style.width = soc * 100 + "%";
+        document.getElementById("targetPin").style.left = target * 100 + "%";
+        document.getElementById("targetLabel").textContent =
+          `Target: ${pct(target)}`;
+
+        // Target tick on arc
+        const tickDeg = 180 - target * 180;
+        document
+          .getElementById("targetTick")
+          .setAttribute("transform", `rotate(${tickDeg - 90}, 75, 85)`);
+
+        // Ticker
+        document.getElementById("tickTime").textContent = t;
+        document.getElementById("simTimeLabel").textContent = t;
+        document.getElementById("tickPrice").textContent =
+          `₹${price.toFixed(1)}`;
+        document.getElementById("tickPrice").className =
+          "tick-v " + (isPeak ? "down" : "up");
+        document.getElementById("tickGrid").textContent = gridOn
+          ? "✅ ACTIVE"
+          : "🔴 OUTAGE";
+        document.getElementById("tickGrid").className =
+          "tick-v " + (gridOn ? "up" : "down");
+        document.getElementById("tickRate").textContent =
+          rate !== null ? `${rate >= 0 ? "+" : ""}${rate.toFixed(1)} kW` : "—";
+        document.getElementById("tickRate").className =
+          "tick-v " + (rate > 0.5 ? "up" : rate < -0.5 ? "down" : "neutral");
+        document.getElementById("tickSoh").textContent = pct(soh);
+        document.getElementById("tickSoh").className =
+          "tick-v " + (soh > 0.998 ? "up" : soh > 0.97 ? "neutral" : "down");
+        document.getElementById("tickUser").textContent = (
+          o.user_type || "—"
+        ).replace("_", " ");
+
+        // Stats
+        document.getElementById("statBill").textContent =
+          `₹${totalBill.toFixed(2)}`;
+        document.getElementById("statBill").style.color =
+          totalBill < 0 ? "var(--green)" : "var(--amber)";
+        document.getElementById("statBillNote").textContent =
+          totalBill < 0 ? "🎉 Net profit!" : "Running cost";
+        document.getElementById("statReward").textContent =
+          reward !== null ? (reward >= 0 ? "+" : "") + reward.toFixed(4) : "—";
+        document.getElementById("statReward").style.color =
+          reward >= 0 ? "var(--green)" : "var(--red)";
+        document.getElementById("statViol").textContent = violations;
+        document.getElementById("statViol").style.color =
+          violations > 0 ? "var(--red)" : "var(--text3)";
+        document.getElementById("statStep").textContent =
+          `${step} / ${maxSteps}`;
+        const minsLeft = (maxSteps - step) * 15;
+        document.getElementById("statEta").textContent =
+          minsLeft >= 60
+            ? `${(minsLeft / 60).toFixed(1)}h sim-time left`
+            : `${minsLeft}min sim-time left`;
+
+        // Grid panel
+        document.getElementById("gridDisplay").className =
+          "grid-status-display " + (gridOn ? "on" : "off");
+        document.getElementById("gridIcon").textContent = gridOn ? "✅" : "🚫";
+        document.getElementById("gridMainText").textContent = gridOn
+          ? "GRID ACTIVE"
+          : "GRID OUTAGE";
+        document.getElementById("gridMainText").className =
+          "grid-main-text " + (gridOn ? "on" : "off");
+        document.getElementById("gridSubText").textContent = gridOn
+          ? isPeak
+            ? "Peak hours — higher outage probability"
+            : "Stable — ideal charging window"
+          : "Load shedding! No power available right now.";
+        document.getElementById("stabVal").textContent =
+          (lastStability * 100).toFixed(0) + "%";
+        document.getElementById("stabVal").style.color =
+          lastStability > 0.9
+            ? "var(--green)"
+            : lastStability > 0.8
+              ? "var(--amber)"
+              : "var(--red)";
+
+        // Price panel
+        document.getElementById("priceDisplay").className =
+          "price-display " + (isPeak ? "peak" : "offpeak");
+        document.getElementById("priceBig").textContent =
+          "₹" + price.toFixed(1);
+        document.getElementById("priceBig").style.color = isPeak
+          ? "var(--amber)"
+          : "var(--green)";
+        document.getElementById("priceBadge").textContent = isPeak
+          ? "⚠️ PEAK HOURS"
+          : "✅ OFF-PEAK";
+        document.getElementById("priceBadge").className =
+          "price-mode-badge " + (isPeak ? "peak" : "offpeak");
+        document.getElementById("priceWhy").textContent = isPeak
+          ? "⚠️ Expensive period (₹10/kWh). Grid is stressed. Agent charges slowly or sells power back (V2G)."
+          : "✅ Cheap electricity (₹6.5/kWh). Best time to charge. Agent maximizes charging rate now.";
+
+        // SOH
+        document.getElementById("sohBig").textContent =
+          (soh * 100).toFixed(2) + "%";
+        document.getElementById("sohBig").style.color =
+          soh > 0.998
+            ? "var(--green)"
+            : soh > 0.98
+              ? "var(--amber)"
+              : "var(--red)";
+        document.getElementById("sohFillInner").style.width = soh * 100 + "%";
+        document.getElementById("sohFillInner").style.background =
+          soh > 0.998
+            ? "var(--green)"
+            : soh > 0.98
+              ? "var(--amber)"
+              : "var(--red)";
+        const degraded = ((1 - soh) * 100).toFixed(4);
+        document.getElementById("sohInfo").textContent =
+          soh >= 1.0
+            ? "✅ Battery in perfect health (100%). No degradation from this session yet."
+            : `Degraded by ${degraded}% this session. High-rate charging and V2G discharge cause wear. Slower charging = healthier battery.`;
+
+        // Narrative + Decision
+        if (rate !== null) {
+          setNarrative(buildNarrative(o, reward, rate));
+          updateDecision(rate, o);
+        }
+      }
+
+      function updateDecision(rate, o) {
+        const arrow = document.getElementById("actionArrow");
+        const kw = document.getElementById("actionKw");
+        const lbl = document.getElementById("actionLabel");
+        if (rate > 0.5) {
+          arrow.className = "action-arrow charging";
+          arrow.textContent = "↑";
+          kw.style.color = "var(--cyan)";
+          kw.textContent = `+${rate.toFixed(1)} kW`;
+          lbl.className = "action-mode-label charging";
+          lbl.textContent = "CHARGING";
+        } else if (rate < -0.5) {
+          arrow.className = "action-arrow discharging";
+          arrow.textContent = "↓";
+          kw.style.color = "var(--purple)";
+          kw.textContent = `${rate.toFixed(1)} kW`;
+          lbl.className = "action-mode-label discharging";
+          lbl.textContent = "V2G DISCHARGE";
+        } else {
+          arrow.className = "action-arrow idle";
+          arrow.textContent = "→";
+          kw.style.color = "var(--text3)";
+          kw.textContent = "≈ 0 kW";
+          lbl.className = "action-mode-label idle";
+          lbl.textContent = "IDLE";
+        }
+        document.getElementById("decisionReason").innerHTML = explainDecision(
+          rate,
+          o,
+        );
+      }
+
+      function resetDecision() {
+        document.getElementById("actionArrow").className = "action-arrow idle";
+        document.getElementById("actionArrow").textContent = "→";
+        document.getElementById("actionKw").textContent = "— kW";
+        document.getElementById("actionKw").style.color = "var(--text3)";
+        document.getElementById("actionLabel").className =
+          "action-mode-label idle";
+        document.getElementById("actionLabel").textContent = "WAITING";
+        document.getElementById("decisionReason").textContent =
+          "The agent hasn't started yet.";
+        document.getElementById("socBig").textContent = "—";
+        document.getElementById("socBig").style.color = "var(--cyan)";
+        document.getElementById("arcFill").style.strokeDashoffset = "204";
+        document.getElementById("socFill").style.width = "0%";
+        ["statBill", "statReward", "statViol", "statStep"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (id === "statViol") el.textContent = "0";
+          else if (id === "statStep")
+            el.textContent = task ? `0 / ${maxSteps}` : "0 / —";
+          else el.textContent = "—";
+        });
+      }
+
+      function addChartPoint(o, rate) {
+        ch.data.labels.push(o.time_of_day);
+        ch.data.datasets[0].data.push(+(o.current_soc * 100).toFixed(2));
+        ch.data.datasets[1].data.push(o.electricity_price_inr || 0);
+        ch.data.datasets[2].data.push(rate > 0 ? +rate.toFixed(2) : 0);
+        ch.data.datasets[3].data.push(rate < 0 ? +(-rate).toFixed(2) : 0);
+        ch.update("none");
+      }
+
+      function updateProgress(s, max) {
+        const p = Math.round((s / max) * 100);
+        document.getElementById("progFill").style.width = p + "%";
+        document.getElementById("progPct").textContent = p + "%";
+      }
+
+      function setNarrative(html) {
+        document.getElementById("narrativeText").innerHTML = html;
+      }
+
+      // ═══════════════════════════════════════
+      // EVENTS
+      // ═══════════════════════════════════════
+      function addEvent(type, icon, msg) {
+        const feed = document.getElementById("eventFeed");
+        const el = document.createElement("div");
+        el.className = `event-entry ${type}`;
+        const now = new Date();
+        const ts = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        el.innerHTML = `<span class="event-icon">${icon}</span><span class="event-body"><span class="event-time">${ts}</span>${msg}</span>`;
+        feed.appendChild(el);
+        feed.scrollTop = feed.scrollHeight;
+        while (feed.children.length > 60) feed.removeChild(feed.firstChild);
+      }
+      function clearEvents() {
+        document.getElementById("eventFeed").innerHTML = "";
+      }
+
+      // ═══════════════════════════════════════
+      // HISTORY
+      // ═══════════════════════════════════════
+      function addHistoryItem(s, o, rate, reward) {
+        const scroll = document.getElementById("historyScroll");
+        const isViol = !o.is_grid_active && rate > 0.5;
+        const type = isViol
+          ? "violation"
+          : rate > 0.5
+            ? "charge"
+            : rate < -0.5
+              ? "discharge"
+              : "idle";
+        const icon = isViol
+          ? "🚨"
+          : rate > 0.5
+            ? "⚡"
+            : rate < -0.5
+              ? "💸"
+              : "⏸";
+        const desc = isViol
+          ? "VIOLATION — charged during outage!"
+          : rate > 0.5
+            ? `+${rate.toFixed(1)}kW → ${pct(o.current_soc)}`
+            : rate < -0.5
+              ? `Sold ${Math.abs(rate).toFixed(1)}kW (V2G)`
+              : `Idle at ${pct(o.current_soc)}`;
+        const el = document.createElement("div");
+        el.className = `hist-item ${type}`;
+        el.innerHTML = `<span class="hist-step">#${s}</span><span class="hist-time">${o.time_of_day}</span><span class="hist-icon">${icon}</span><span class="hist-desc">${desc}</span><span class="hist-kw" style="color:${reward >= 0 ? "var(--green)" : "var(--red)"}">${reward >= 0 ? "+" : ""}${reward.toFixed(3)}</span>`;
+        scroll.insertBefore(el, scroll.firstChild);
+        while (scroll.children.length > 120)
+          scroll.removeChild(scroll.lastChild);
+
+        if (isViol)
+          addEvent(
+            "bad",
+            "🚨",
+            `Step ${s}: Violation! Tried to charge during a grid outage.`,
+          );
+        else if (!o.is_grid_active)
+          addEvent(
+            "warn",
+            "🔌",
+            `Step ${s} @ ${o.time_of_day}: Grid down — agent correctly idled.`,
+          );
+        else if (rate < -0.5)
+          addEvent(
+            "good",
+            "💰",
+            `Step ${s}: Sold ${Math.abs(rate).toFixed(1)} kW at ₹${(o.electricity_price_inr || 0).toFixed(1)}/kWh (V2G profit!)`,
+          );
+        else if (s % 12 === 0)
+          addEvent(
+            "info",
+            "📊",
+            `Step ${s}: SOC ${pct(o.current_soc)} | Bill ₹${totalBill.toFixed(2)} | Health ${pct(o.battery_health_soh)}`,
+          );
+      }
+      function clearHistory() {
+        document.getElementById("historyScroll").innerHTML = "";
+      }
+
+      // ═══════════════════════════════════════
+      // SCORE
+      // ═══════════════════════════════════════
+      function showScore(score) {
+        document.getElementById("scoreArea").classList.add("show");
+        document.getElementById("scoreBig").textContent = score.toFixed(3);
+        const col =
+          score >= 0.7 ? "#4ade80" : score >= 0.5 ? "#fbbf24" : "#f87171";
+        document.getElementById("scoreBig").style.color =
+          score >= 0.7
+            ? "var(--green)"
+            : score >= 0.5
+              ? "var(--amber)"
+              : "var(--red)";
+        document.getElementById("scoreCircle").style.strokeDashoffset =
+          289 - score * 289;
+        document.getElementById("scoreCircle").style.stroke = col;
+        const v = document.getElementById("verdictBadge");
+        v.textContent =
+          score >= 0.7 ? "✅ PASS — Threshold met!" : "❌ FAIL — Below 0.70";
+        v.className = "verdict " + (score >= 0.7 ? "pass" : "fail");
+        const socR = obs ? obs.current_soc / obs.target_soc : 0;
+        const costPerf = Math.max(0, 1 - (totalBill + 200) / 700);
+        document.getElementById("scoreBreakdown").innerHTML = `
+    <div class="score-row"><span class="score-row-label">🔋 SOC Achievement</span><span class="score-row-val" style="color:${socR >= 1 ? "var(--green)" : "var(--amber)"}">${Math.min(100, socR * 100).toFixed(0)}%</span></div>
+    <div class="score-row"><span class="score-row-label">💰 Cost Efficiency</span><span class="score-row-val" style="color:var(--cyan)">${(costPerf * 100).toFixed(0)}%</span></div>
+    <div class="score-row"><span class="score-row-label">🔋 Battery Health</span><span class="score-row-val" style="color:var(--green)">${obs ? (obs.battery_health_soh * 100).toFixed(3) + "%" : "—"}</span></div>
+    <div class="score-row"><span class="score-row-label">🚫 Grid Violations</span><span class="score-row-val" style="color:${violations > 0 ? "var(--red)" : "var(--green)"}">${violations}</span></div>
+    <div class="score-row" style="margin-top:4px;padding-top:5px;border-top:1px solid var(--border)"><span class="score-row-label" style="font-size:10px;color:var(--text3)">Threshold to pass</span><span class="score-row-val" style="color:var(--text3)">≥ 0.70</span></div>
+  `;
+        addEvent(
+          score >= 0.7 ? "good" : "bad",
+          score >= 0.7 ? "🏆" : "📉",
+          `Final score: ${score.toFixed(3)} (${score >= 0.7 ? "PASS" : "FAIL"}). Threshold = 0.70.`,
+        );
+      }
+
+      function estimateScore() {
+        if (!obs) return 0;
+        return Math.max(
+          0.001,
+          Math.min(0.999, (obs.current_soc / obs.target_soc) * 0.7 + 0.1),
+        );
+      }
+
+      // ═══════════════════════════════════════
+      // DEMO PHYSICS (offline mode)
+      // ═══════════════════════════════════════
+      function mockObs() {
+        const fleet = Math.random() > 0.5;
+        return {
+          current_soc: fleet
+            ? 0.12 + Math.random() * 0.1
+            : 0.22 + Math.random() * 0.15,
+          battery_health_soh: 1.0,
+          electricity_price_inr: 6.5,
+          is_grid_active: true,
+          time_of_day: "22:00",
+          user_type: fleet ? "amazon_fleet" : "personal",
+          target_soc: fleet ? 0.95 : 0.8,
+          user_history: fleet
+            ? [5.9, 6.1, 6.0, 5.95, 6.05]
+            : [8.0, 9.2, 7.8, 8.5, 8.1],
+          _h: 22.0,
+          _bill: 0,
+          _viol: 0,
+        };
+      }
+
+      function physicsStep(o, rate) {
+        const h = (o._h || 22.0) + 0.25;
+        const hm = h % 24;
+        const isPeak = hm >= 18 && hm <= 22;
+        const outageProb = isPeak ? 0.2 : 0.04;
+        const gridOn = Math.random() > outageProb;
+        const stab = gridOn
+          ? isPeak
+            ? 0.76 + Math.random() * 0.16
+            : 0.95 + Math.random() * 0.05
+          : 0;
+        lastStability = stab;
+
+        let actualKw = 0,
+          viol = o._viol || 0;
+        if (!gridOn && rate > 0) {
+          viol++;
+          actualKw = 0;
+        } else if (gridOn) {
+          const c = Math.max(-15, Math.min(50, rate));
+          if (c > 0 && o.current_soc >= 1.0) actualKw = 0;
+          else if (c < 0 && o.current_soc <= 0.0) actualKw = 0;
+          else actualKw = c * stab;
+        }
+
+        let soc = Math.max(
+          0,
+          Math.min(1, o.current_soc + (actualKw * 0.25) / 45.0),
+        );
+        const cRate = Math.abs(actualKw) / 45;
+        let soh = Math.max(
+          0,
+          Math.min(
+            1,
+            o.battery_health_soh -
+              (Math.abs(actualKw) > 22 ? 0.00005 : 0.00001) * cRate * cRate,
+          ),
+        );
+        const price = isPeak ? 10.0 : 6.5;
+        const bill = (o._bill || 0) + actualKw * 0.25 * price;
+        totalBill = bill;
+        violations = viol;
+
+        const hr = Math.floor(hm),
+          mn = Math.round((hm % 1) * 60) % 60;
+        const reward =
+          ((actualKw * 0.25) / 45) * 10 -
+          (actualKw * 0.25 * price) / 100 -
+          (1 - stab) * 0.5;
+
+        return {
+          obs: {
+            ...o,
+            current_soc: soc,
+            battery_health_soh: soh,
+            electricity_price_inr: price,
+            is_grid_active: gridOn,
+            time_of_day: `${pad(hr)}:${pad(mn)}`,
+            _h: h,
+            _bill: bill,
+            _viol: viol,
+          },
+          reward,
+          bill,
+          violations: viol,
+          stability: stab,
+        };
+      }
+
+      // ═══════════════════════════════════════
+      // UTILS
+      // ═══════════════════════════════════════
+      function pct(v) {
+        return v != null ? (v * 100).toFixed(1) + "%" : "—";
+      }
+      function pad(n) {
+        return String(Math.floor(n)).padStart(2, "0");
+      }
+      function setSpeed(ms) {
+        speed = ms;
+        document
+          .querySelectorAll(".spd")
+          .forEach((b) => b.classList.toggle("on", +b.dataset.ms === ms));
+      }
+
+      // ═══════════════════════════════════════
+      // INIT
+      // ═══════════════════════════════════════
+      addEvent(
+        "info",
+        "⚡",
+        "NexonGuard ready. Select a task and press Run to start the AI simulation.",
+      );
+    </script>
+  </body>
+</html>
